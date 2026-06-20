@@ -4,7 +4,7 @@ const { getProducts, createProduct, updateProduct, deleteProduct } = require('..
 const { protect, admin } = require('../middleware/auth');
 
 router.route('/')
-  .get(protect, getProducts)
+  .get(getProducts)
   .post(protect, admin, createProduct);
 
 router.route('/:id')

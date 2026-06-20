@@ -12,18 +12,27 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SharedLayout from './components/SharedLayout';
 import Register from './components/Register';
 import Reports from './components/Reports';
+import QRGenerator from './components/QRGenerator';
+import MenuManager from './components/MenuManager';
+import Marketing from './components/Marketing';
+import EmployeeManager from './components/EmployeeManager';
+import ThemeToggle from './components/ThemeToggle';
 
 function App() {
   return (
     <SocketProvider>
       <NotificationProvider>
         <Router>
-          <div className="app-container" style={{ minHeight: '100vh' }}>
+          <div className="app-container" style={{ minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+            <ThemeToggle />
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/s/:tableToken" element={<CustomerMenu />} />
+              
+              {/* Public Routes for Customers & Printing */}
+              <Route path="/qr/:tableId" element={<QRGenerator />} />
+              <Route path="/menu/:tableId" element={<CustomerMenu />} />
 
               {/* Protected Routes inside SharedLayout */}
               <Route element={<SharedLayout />}>
@@ -32,6 +41,9 @@ function App() {
                 <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/menu-manager" element={<MenuManager />} />
+                  <Route path="/marketing" element={<Marketing />} />
+                  <Route path="/employees" element={<EmployeeManager />} />
                 </Route>
 
                 {/* Admin + Cashier */}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Grid, Coffee, Navigation, LogOut, FileText } from 'lucide-react';
+import { LayoutDashboard, Grid, Coffee, Navigation, LogOut, FileText, Utensils, Tag, Zap, Users } from 'lucide-react';
+import VerificationAlerts from './VerificationAlerts';
 
 const SharedLayout = () => {
   const navigate = useNavigate();
@@ -17,10 +18,13 @@ const SharedLayout = () => {
     if (currentRole === 'Admin') {
       return [
         { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+        { path: '/employees', label: 'Employee Management', icon: <Users size={20} /> },
         { path: '/floor', label: 'Floor Plan', icon: <Grid size={20} /> },
         { path: '/kds', label: 'KDS Monitor', icon: <Coffee size={20} /> },
         { path: '/servant', label: 'Servant Monitor', icon: <Navigation size={20} /> },
         { path: '/reports', label: 'Reports', icon: <FileText size={20} /> },
+        { path: '/menu-manager', label: 'Menu Management', icon: <Utensils size={20} /> },
+        { path: '/marketing', label: 'Marketing', icon: <Tag size={20} /> },
       ];
     }
     if (currentRole === 'Cashier') {
@@ -74,16 +78,19 @@ const SharedLayout = () => {
         </nav>
 
         <div style={{ padding: '1.5rem 1rem' }}>
-          <button onClick={handleLogout} className="pill-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'white', color: 'var(--status-red)', border: '1px solid var(--status-red)' }}>
+          <button onClick={handleLogout} className="pill-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'var(--card-bg)', color: 'var(--status-red)', border: '1px solid var(--status-red)' }}>
             <LogOut size={18} /> Logout
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, overflowY: 'auto' }}>
+      <main style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
         <Outlet />
       </main>
+
+      {/* Global Verification Alerts */}
+      <VerificationAlerts />
     </div>
   );
 };

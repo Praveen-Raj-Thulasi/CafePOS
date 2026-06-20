@@ -9,6 +9,7 @@ const KDS = () => {
   const { addNotification } = useNotification();
   const [orders, setOrders] = useState([]);
   const navigate = useNavigate();
+  const currentRole = localStorage.getItem('userRole');
 
   const handleLogout = () => {
     localStorage.removeItem('userRole');
@@ -74,8 +75,27 @@ const KDS = () => {
     }
   };
 
+  const toggleItemStatus = async (e, itemId, currentStatus) => {
+    e.stopPropagation();
+    const nextStatus = currentStatus === 'Completed' ? 'Preparing' : 'Completed';
+    try {
+      const token = localStorage.getItem('userToken');
+      await fetch(`http://localhost:5000/api/kds/item/${itemId}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ kdsStatus: nextStatus })
+      });
+      fetchTickets();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const Column = ({ title, status, color }) => (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: '15px' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem', backgroundColor: 'var(--column-bg)', borderRadius: '15px' }}>
       <h2 style={{ padding: '1rem', borderBottom: `3px solid ${color}`, marginBottom: '1rem', color: 'var(--text-primary)' }}>{title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1 }}>
         {orders.filter(o => o.status === status).map(order => (
@@ -88,7 +108,18 @@ const KDS = () => {
             <div style={{ marginBottom: '1rem' }}>
               <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-primary)', fontSize: '1.2rem', fontWeight: 500 }}>
                 {order.items && order.items.map(item => (
-                  <li key={item._id}>{item.quantity}x {item.product?.name}</li>
+                  <li 
+                    key={item._id}
+                    onClick={(e) => toggleItemStatus(e, item._id, item.kdsStatus)}
+                    style={{ 
+                      textDecoration: item.kdsStatus === 'Completed' ? 'line-through' : 'none',
+                      color: item.kdsStatus === 'Completed' ? 'var(--text-secondary)' : 'inherit',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {item.quantity}x {item.product?.name}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -111,9 +142,11 @@ const KDS = () => {
         <h1 style={{ margin: 0, color: 'var(--accent-primary)' }}>Kitchen Display System</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <span style={{ fontWeight: 600 }}>Sorting by: Dynamic Priority Matrix</span>
-          <button onClick={handleLogout} className="pill-btn" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'white', color: 'var(--status-red)', border: '1px solid var(--status-red)' }}>
-            <LogOut size={16} style={{ marginRight: '5px' }} /> Logout
-          </button>
+          {currentRole !== 'Admin' && (
+            <button onClick={handleLogout} className="pill-btn" style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--card-bg)', color: 'var(--status-red)', border: '1px solid var(--status-red)' }}>
+              <LogOut size={16} style={{ marginRight: '5px' }} /> Logout
+            </button>
+          )}
         </div>
       </header>
       

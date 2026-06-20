@@ -32,4 +32,31 @@ const getTickets = async (req, res) => {
   }
 };
 
-module.exports = { getTickets };
+const updateItemStatus = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { kdsStatus } = req.body;
+
+    const item = await OrderItem.findByIdAndUpdate(
+      itemId,
+      { kdsStatus },
+      { new: true }
+    );
+
+    if (!item) {
+      return res.status(404).json({ message: 'Order item not found' });
+    }
+
+    // Emit event to update KDS
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('kds_refresh_needed', { type: 'ITEM_UPDATED' });
+    }
+
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getTickets, updateItemStatus };

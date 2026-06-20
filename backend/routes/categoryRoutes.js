@@ -4,7 +4,7 @@ const { getCategories, createCategory, updateCategory, deleteCategory } = requir
 const { protect, admin } = require('../middleware/auth');
 
 router.route('/')
-  .get(protect, getCategories)
+  .get(getCategories)
   .post(protect, admin, createCategory);
 
 router.route('/:id')

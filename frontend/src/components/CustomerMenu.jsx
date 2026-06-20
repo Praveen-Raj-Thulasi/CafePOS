@@ -1,82 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
-import { useNotification } from '../contexts/NotificationContext';
-import { Mic, MicOff, ShoppingBag, Plus, Minus } from 'lucide-react';
-
-const mockProducts = [
-  { id: 'p1', name: 'Latte Art Special', category: 'c1', price: 5.50, image: '/cafe_latte.png' },
-  { id: 'p2', name: 'Espresso', category: 'c1', price: 3.00 },
-  { id: 'p3', name: 'Croissant', category: 'c2', price: 4.20 },
-  { id: 'p4', name: 'Avocado Toast', category: 'c3', price: 9.50 },
-];
+import { Plus, Minus, ShoppingBag, Receipt, CreditCard, ChevronDown, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const CustomerMenu = () => {
   const { tableId } = useParams();
   const socket = useSocket();
-  const { addNotification } = useNotification();
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [activeCat, setActiveCat] = useState('');
   const [cart, setCart] = useState([]);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [openTab, setOpenTab] = useState(null);
+  
+  // Modals / Tabs
+  const [activeView, setActiveView] = useState('menu'); // menu, cart, bill, payment
 
-  // Voice AI Logic
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("Speech Recognition not supported in this browser.");
-      return;
-    }
+  // Payment mock state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentPending, setPaymentPending] = useState(false);
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => setIsListening(true);
-    
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript.toLowerCase();
-      setTranscript(text);
+  const fetchData = async () => {
+    try {
+      const [catRes, prodRes, billRes] = await Promise.all([
+        fetch('http://localhost:5000/api/categories'),
+        fetch('http://localhost:5000/api/products'),
+        fetch(`http://localhost:5000/api/payments/bill/${tableId}`)
+      ]);
       
-      // Super basic NLP matching for hackathon
-      let addedSomething = false;
-      mockProducts.forEach(product => {
-        const productName = product.name.toLowerCase();
-        // Check if spoken text contains a product name (e.g. "latte", "espresso")
-        if (text.includes(productName.split(' ')[0])) { 
-          addToCart(product);
-          addedSomething = true;
-        }
-      });
+      if (catRes.ok && prodRes.ok) {
+        const catData = await catRes.json();
+        const prodData = await prodRes.json();
+        setCategories(catData);
+        setProducts(prodData);
+        if (catData.length > 0 && !activeCat) setActiveCat(catData[0]._id);
+      }
 
-      if (addedSomething) {
-        addNotification(`Added items from voice: "${text}"`, 'success');
-      } else {
-        addNotification(`Couldn't find items matching: "${text}"`, 'warning');
+      if (billRes.ok) {
+        const billData = await billRes.json();
+        setOpenTab(billData);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    if (!socket) return;
+    
+    const handleUpdate = () => fetchData();
+    const handleVerified = (data) => {
+      if (data.tableId === tableId) {
+        setPaymentPending(false);
+        setPaymentSuccess(true);
+      }
+    };
+    const handleRejected = (data) => {
+      if (data.tableId === tableId) {
+        setPaymentPending(false);
+        setActiveView('payment');
+        alert('Your payment could not be verified by the cashier. Please try again or speak to staff.');
       }
     };
 
-    recognition.onerror = (event) => {
-      console.error(event.error);
-      setIsListening(false);
+    socket.on('table_state_changed', handleUpdate);
+    socket.on('order_served', handleUpdate);
+    socket.on('payment_verified', handleVerified);
+    socket.on('payment_rejected', handleRejected);
+
+    return () => {
+      socket.off('table_state_changed', handleUpdate);
+      socket.off('order_served', handleUpdate);
+      socket.off('payment_verified', handleVerified);
+      socket.off('payment_rejected', handleRejected);
     };
+  }, [socket, tableId]);
 
-    recognition.onend = () => setIsListening(false);
-
-    // Expose toggle globally for the button
-    window.toggleVoice = () => {
-      if (isListening) recognition.stop();
-      else recognition.start();
-    };
-
-    return () => recognition.abort();
-  }, [isListening, addNotification]);
+  const filteredProducts = products.filter(p => p.category === activeCat || p.category?._id === activeCat);
 
   const addToCart = (product) => {
     setCart(prev => {
-      const exists = prev.find(item => item.id === product.id);
+      const exists = prev.find(item => item._id === product._id);
       if (exists) {
-        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+        return prev.map(item => item._id === product._id ? { ...item, qty: item.qty + 1 } : item);
       }
       return [...prev, { ...product, qty: 1 }];
     });
@@ -84,98 +93,351 @@ const CustomerMenu = () => {
 
   const updateQty = (id, delta) => {
     setCart(prev => prev.map(item => {
-      if (item.id === id) {
+      if (item._id === id) {
         const newQty = item.qty + delta;
         return newQty > 0 ? { ...item, qty: newQty } : item;
       }
       return item;
-    }));
+    }).filter(item => item.qty > 0)); // Filter out 0 qty
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const tax = subtotal * 0.1;
+  const total = subtotal + tax;
 
-  const placeOrder = () => {
+  const submitOrder = async () => {
     if (cart.length === 0) return;
-    
-    if (socket) {
-      // Fake placing order to backend
-      socket.emit('order_created', { orderNumber: `QR-${Math.floor(Math.random()*1000)}` });
-      socket.emit('new_kitchen_ticket', { tableId, orderNumber: `QR-${Math.floor(Math.random()*1000)}` });
+    try {
+      const orderPayload = {
+        tableId,
+        channel: 'QR',
+        items: cart.map(item => ({
+          product: item._id,
+          quantity: item.qty,
+          unitPrice: item.price,
+          kdsAssigned: item.requiresKitchen !== undefined ? item.requiresKitchen : true
+        }))
+      };
+
+      const response = await fetch('http://localhost:5000/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload)
+      });
+
+      if (response.ok) {
+        setCart([]);
+        setActiveView('bill');
+        fetchData();
+        alert('Order sent to the kitchen!');
+      } else {
+        alert('Failed to place order.');
+      }
+    } catch (err) {
+      console.error(err);
     }
-    
-    setCart([]);
-    addNotification('Order placed successfully! The kitchen is preparing your food.', 'success');
   };
+
+  const handleOnlinePayment = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/payments/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableId })
+      });
+
+      if (response.ok) {
+        setIsProcessing(false);
+        setPaymentPending(true);
+      } else {
+        setIsProcessing(false);
+        alert('Failed to submit payment claim. Please try again.');
+      }
+    } catch (err) {
+      setIsProcessing(false);
+      console.error(err);
+    }
+  };
+
+  if (paymentPending) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f9fafb', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: '50%', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
+          <div className="spinner" style={{ width: '60px', height: '60px', border: '5px solid #e5e7eb', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        </div>
+        <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Waiting for Verification</h2>
+        <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>The cashier is currently verifying your payment. This usually takes just a few seconds!</p>
+        <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (paymentSuccess) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'var(--status-green)', color: 'white', padding: '2rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</h1>
+        <h2>Payment Successful!</h2>
+        <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>Thank you for dining with us. You are all set to go!</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ paddingBottom: '100px', backgroundColor: 'var(--bg-color)', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f9fafb', fontFamily: "'Inter', sans-serif" }}>
       
-      {/* Hero Header */}
-      <div style={{ height: '250px', backgroundImage: 'url(/cafe_interior.png)', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }}></div>
-        <div style={{ position: 'relative', padding: '2rem', color: 'white', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-end' }}>
-          <h1 style={{ fontSize: '2.5rem', margin: 0 }}>Odoo Cafe</h1>
-          <p style={{ opacity: 0.9, fontSize: '1.2rem', margin: '0.5rem 0 0 0' }}>Table {tableId}</p>
-        </div>
-      </div>
+      {/* Header */}
+      <header style={{ padding: '1rem', backgroundColor: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 10 }}>
+        <h1 style={{ margin: 0, color: 'var(--accent-primary)', fontSize: '1.5rem', fontWeight: 800 }}>Odoo Cafe</h1>
+      </header>
 
-      {/* Voice Assistant Banner */}
-      <div style={{ margin: '1rem', padding: '1.5rem', backgroundColor: 'var(--accent-primary)', color: 'white', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: 'var(--shadow-float)' }}>
-        <div>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>Voice Ordering</h3>
-          <p style={{ margin: 0, opacity: 0.9, fontSize: '0.9rem' }}>Tap the mic and say "I want a Latte"</p>
-          {transcript && <p style={{ margin: '0.5rem 0 0 0', fontStyle: 'italic', fontSize: '0.85rem' }}>"{transcript}"</p>}
-        </div>
-        <button 
-          onClick={() => window.toggleVoice && window.toggleVoice()}
-          style={{ width: '60px', height: '60px', borderRadius: '50%', border: 'none', backgroundColor: 'white', color: isListening ? 'var(--status-red)' : 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s' }}
-        >
-          {isListening ? <span className="pulse-dot" style={{ width: '20px', height: '20px', backgroundColor: 'var(--status-red)', borderRadius: '50%' }}></span> : <Mic size={28} />}
-        </button>
-      </div>
+      {/* Main Content Area */}
+      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }}>
+        
+        {/* VIEW: MENU */}
+        {activeView === 'menu' && (
+          <>
+            {/* Categories */}
+            <div style={{ display: 'flex', overflowX: 'auto', padding: '1rem', gap: '0.75rem', scrollbarWidth: 'none' }}>
+              {categories.map(cat => (
+                <button 
+                  key={cat._id}
+                  onClick={() => setActiveCat(cat._id)}
+                  style={{ 
+                    padding: '0.5rem 1.25rem', 
+                    borderRadius: '99px',
+                    border: 'none',
+                    backgroundColor: activeCat === cat._id ? 'var(--accent-primary)' : 'white',
+                    color: activeCat === cat._id ? 'white' : 'var(--text-secondary)',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
 
-      {/* Product List */}
-      <div style={{ padding: '1rem' }}>
-        <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Our Menu</h2>
-        <div style={{ display: 'grid', gap: '1.5rem' }}>
-          {mockProducts.map(product => (
-            <div key={product.id} className="glass-card" style={{ display: 'flex', padding: '1rem', gap: '1rem', alignItems: 'center' }}>
-              {product.image ? (
-                <div style={{ width: '80px', height: '80px', borderRadius: '10px', backgroundImage: `url(${product.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-              ) : (
-                <div style={{ width: '80px', height: '80px', borderRadius: '10px', backgroundColor: '#f3f4f6' }} />
-              )}
-              <div style={{ flex: 1 }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{product.name}</h4>
-                <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>${product.price.toFixed(2)}</span>
+            {/* Products */}
+            <div style={{ padding: '0 1rem 1rem 1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {filteredProducts.map(product => (
+                <div key={product._id} style={{ display: 'flex', backgroundColor: 'white', padding: '1rem', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', alignItems: 'center' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{product.name}</h3>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1.2rem' }}>₹{product.price.toFixed(2)}</span>
+                  </div>
+                  
+                  {cart.find(i => i._id === product._id) ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#f3f4f6', padding: '0.25rem', borderRadius: '99px' }}>
+                      <button onClick={() => updateQty(product._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Minus size={16} /></button>
+                      <span style={{ fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{cart.find(i => i._id === product._id).qty}</span>
+                      <button onClick={() => updateQty(product._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Plus size={16} /></button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => addToCart(product)}
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)' }}
+                    >
+                      <Plus size={20} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* VIEW: CART */}
+        {activeView === 'cart' && (
+          <div style={{ padding: '1.5rem' }}>
+            <h2 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShoppingBag /> Your Cart</h2>
+            
+            {cart.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)' }}>Your cart is empty. Let's add some delicious food!</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {cart.map(item => (
+                  <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', padding: '1rem', borderRadius: '15px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{item.name}</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>₹{(item.price * item.qty).toFixed(2)}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#f3f4f6', padding: '0.25rem', borderRadius: '99px' }}>
+                      <button onClick={() => updateQty(item._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
+                      <span style={{ fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{item.qty}</span>
+                      <button onClick={() => updateQty(item._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'white', borderRadius: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Subtotal</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Tax (10%)</span>
+                    <span>₹{tax.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 800 }}>
+                    <span>Total</span>
+                    <span style={{ color: 'var(--accent-primary)' }}>₹{total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={submitOrder}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'white', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem' }}
+                >
+                  Send Order to Kitchen
+                </button>
               </div>
-              <button 
-                onClick={() => addToCart(product)}
-                style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--bg-color)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Floating Cart Overlay */}
-      {cart.length > 0 && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', padding: '1.5rem', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', boxShadow: '0 -10px 25px rgba(0,0,0,0.05)', zIndex: 100 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-              <ShoppingBag size={20} color="var(--accent-primary)" />
-              <span>{cart.reduce((s, i) => s + i.qty, 0)} Items</span>
-            </div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>${total.toFixed(2)}</span>
+            )}
           </div>
-          <button onClick={placeOrder} className="pill-btn" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}>
-            Send Order to Kitchen
-          </button>
-        </div>
-      )}
+        )}
 
+        {/* VIEW: BILL */}
+        {activeView === 'bill' && (
+          <div style={{ padding: '1.5rem' }}>
+            <h2 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Receipt /> My Bill</h2>
+            
+            {!openTab || openTab.total === 0 ? (
+              <p style={{ color: 'var(--text-secondary)' }}>You have no open tab. Place an order to see your bill here!</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ backgroundColor: 'white', borderRadius: '15px', padding: '1.5rem' }}>
+                  {openTab.orders.map((order, idx) => (
+                    <div key={order._id} style={{ marginBottom: idx === openTab.orders.length - 1 ? 0 : '1.5rem', borderBottom: idx === openTab.orders.length - 1 ? 'none' : '1px dashed #e5e7eb', paddingBottom: idx === openTab.orders.length - 1 ? 0 : '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontWeight: 600 }}>Order #{order.orderNumber}</span>
+                        <span style={{ 
+                          fontSize: '0.8rem', 
+                          padding: '0.2rem 0.5rem', 
+                          borderRadius: '5px', 
+                          backgroundColor: order.status === 'Served' ? '#dcfce7' : '#fef3c7',
+                          color: order.status === 'Served' ? '#166534' : '#92400e'
+                        }}>{order.status}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        <span>Subtotal: ₹{order.subtotal.toFixed(2)}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>₹{order.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ backgroundColor: '#eff6ff', borderRadius: '15px', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', fontWeight: 800 }}>
+                    <span>Total Due</span>
+                    <span style={{ color: 'var(--accent-primary)' }}>₹{openTab.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setActiveView('payment')}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: '#10b981', color: 'white', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                  <CreditCard /> Pay Online Now
+                </button>
+                
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '1rem' }}>
+                  Or you can pay at the cashier or ask a waiter.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* VIEW: PAYMENT FORM */}
+        {activeView === 'payment' && (
+          <div style={{ padding: '1.5rem' }}>
+            <h2 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>Checkout</h2>
+            <div style={{ backgroundColor: 'white', borderRadius: '15px', padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>
+                <span>Total Due</span>
+                <span style={{ color: 'var(--accent-primary)' }}>₹{openTab.total.toFixed(2)}</span>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'center', marginBottom: '2rem' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Scan with GPay, PhonePe, or Paytm</h3>
+                <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                  <QRCodeSVG 
+                    value={`upi://pay?pa=7010496249@nyes&pn=OdooCafe&am=${openTab.total.toFixed(2)}&cu=INR`} 
+                    size={200} 
+                    level="H" 
+                  />
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Scan the QR code above using any UPI app. Once the payment is complete on your device, click the button below to close your tab.
+                </p>
+              </div>
+              
+              <form onSubmit={handleOnlinePayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button 
+                  type="submit"
+                  disabled={isProcessing}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--status-green)', color: 'white', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {isProcessing ? 'Verifying Payment...' : 'I Have Paid'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveView('bill')}
+                  style={{ width: '100%', padding: '1rem', borderRadius: '15px', border: 'none', backgroundColor: 'transparent', color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Fixed Bottom Navigation */}
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-around', padding: '0.75rem', zIndex: 20 }}>
+        <button 
+          onClick={() => setActiveView('menu')}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'none', background: 'none', color: activeView === 'menu' ? 'var(--accent-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          <div style={{ padding: '0.5rem', borderRadius: '50%', backgroundColor: activeView === 'menu' ? 'rgba(99, 102, 241, 0.1)' : 'transparent' }}>
+            <span style={{ fontSize: '1.5rem' }}>🍔</span>
+          </div>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: '0.25rem' }}>Menu</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveView('cart')}
+          style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'none', background: 'none', color: activeView === 'cart' ? 'var(--accent-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          <div style={{ padding: '0.5rem', borderRadius: '50%', backgroundColor: activeView === 'cart' ? 'rgba(99, 102, 241, 0.1)' : 'transparent' }}>
+            <ShoppingBag size={24} />
+          </div>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: '0.25rem' }}>Cart</span>
+          {cart.length > 0 && (
+            <span style={{ position: 'absolute', top: 0, right: '5px', backgroundColor: 'var(--status-red)', color: 'white', fontSize: '0.7rem', fontWeight: 700, width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {cart.reduce((s, i) => s + i.qty, 0)}
+            </span>
+          )}
+        </button>
+
+        <button 
+          onClick={() => setActiveView('bill')}
+          style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'none', background: 'none', color: (activeView === 'bill' || activeView === 'payment') ? 'var(--accent-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          <div style={{ padding: '0.5rem', borderRadius: '50%', backgroundColor: (activeView === 'bill' || activeView === 'payment') ? 'rgba(99, 102, 241, 0.1)' : 'transparent' }}>
+            <Receipt size={24} />
+          </div>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: '0.25rem' }}>My Bill</span>
+          {openTab && openTab.total > 0 && (
+            <span style={{ position: 'absolute', top: 5, right: '10px', width: '10px', height: '10px', backgroundColor: 'var(--status-orange)', borderRadius: '50%' }}></span>
+          )}
+        </button>
+      </nav>
+      
     </div>
   );
 };

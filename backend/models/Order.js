@@ -13,9 +13,20 @@ const orderSchema = new mongoose.Schema({
     enum: ['Pending', 'Preparing', 'Ready', 'Served', 'Completed'], 
     default: 'Pending' 
   },
+  paymentStatus: {
+    type: String,
+    enum: ['Unpaid', 'PendingVerification', 'Paid'],
+    default: 'Unpaid'
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['Online', 'Cashier', 'Servant', 'None'],
+    default: 'None'
+  },
   subtotal: { type: Number, required: true, default: 0 },
   tax: { type: Number, required: true, default: 0 },
   discount: { type: Number, required: true, default: 0 },
+  couponCode: { type: String },
   total: { type: Number, required: true, default: 0 },
   orderNumber: { type: String, required: true, unique: true }
 }, { timestamps: true });

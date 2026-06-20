@@ -14,6 +14,9 @@ const kdsRoutes = require('./routes/kdsRoutes');
 const dispatchRoutes = require('./routes/dispatchRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+const promotionRoutes = require('./routes/promotionRoutes');
 
 // Connect to Database
 connectDB();
@@ -43,6 +46,9 @@ app.use('/api/kds', kdsRoutes);
 app.use('/api/dispatch', dispatchRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/promotions', promotionRoutes);
 
 // Base route
 app.get('/', (req, res) => {

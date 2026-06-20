@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
-import { LogOut, Coffee, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { LogOut, Coffee, CheckCircle, Plus, Trash2, QrCode } from 'lucide-react';
 
 const FloorPlan = () => {
   const navigate = useNavigate();
@@ -215,52 +215,55 @@ const FloorPlan = () => {
                   <div 
                     key={table._id}
                     className="glass-card"
-                    onClick={() => !isActive && !tableServedOrder && navigate(`/order/${table._id}`)}
+                    onClick={() => navigate(`/order/${table._id}`)}
                     style={{ 
                       padding: '2rem 1rem', 
                       display: 'flex', 
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      cursor: (isActive || tableServedOrder) ? 'default' : 'pointer',
+                      cursor: 'pointer',
                       borderTop: `6px solid ${isActive ? 'var(--status-green)' : 'var(--status-red)'}`,
                       backgroundColor: isActive ? '#ecfdf5' : 'white',
                       position: 'relative'
                     }}
                   >
                     {currentRole === 'Admin' && (
-                      <button 
-                        onClick={(e) => handleDeleteTable(e, table._id)} 
-                        style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer', padding: 0 }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`/qr/${table._id}?number=${table.tableNumber}`, '_blank');
+                          }} 
+                          style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}
+                          title="Print QR Code"
+                        >
+                          <QrCode size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteTable(e, table._id)} 
+                          style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer', padding: 0 }}
+                          title="Delete Table"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     )}
 
                     <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{table.tableNumber}</span>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{table.seats} Seats</span>
                     
-                    {tableServedOrder ? (
-                      <button 
-                        onClick={(e) => completeBill(e, tableServedOrder._id)}
-                        className="pill-btn"
-                        style={{ marginTop: '1rem', padding: '0.5rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.2rem', backgroundColor: 'var(--status-green)' }}
-                      >
-                        <CheckCircle size={14} /> Complete Bill
-                      </button>
-                    ) : (
-                      <span style={{ 
-                        marginTop: '1rem', 
-                        padding: '0.25rem 0.75rem', 
-                        borderRadius: '99px', 
-                        fontSize: '0.75rem', 
-                        fontWeight: 600,
-                        backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                        color: isActive ? 'var(--status-green)' : 'var(--status-red)'
-                      }}>
-                        {table.status}
-                      </span>
-                    )}
+                    <span style={{ 
+                      marginTop: '1rem', 
+                      padding: '0.25rem 0.75rem', 
+                      borderRadius: '99px', 
+                      fontSize: '0.75rem', 
+                      fontWeight: 600,
+                      backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: isActive ? 'var(--status-green)' : 'var(--status-red)'
+                    }}>
+                      {table.status}
+                    </span>
                   </div>
                 );
               })}

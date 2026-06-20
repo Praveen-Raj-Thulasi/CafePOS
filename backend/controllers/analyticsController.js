@@ -71,13 +71,46 @@ const getReportData = async (req, res) => {
       query.updatedAt = { $gte: start, $lte: end };
     }
 
-    const orders = await Order.find(query)
+    const rawOrders = await Order.find(query)
       .populate('table', 'tableNumber')
-      .populate('items.product', 'name')
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean(); // Use lean to freely attach items
 
-    res.json(orders);
+    const orderIds = rawOrders.map(o => o._id);
+    const OrderItem = require('../models/OrderItem');
+    const orderItems = await OrderItem.find({ order: { $in: orderIds } }).populate('product', 'name').lean();
+
+    // Attach items to orders
+    rawOrders.forEach(order => {
+      order.items = orderItems.filter(item => item.order.toString() === order._id.toString());
+    });
+
+    // Group by Date string (YYYY-MM-DD)
+    const groupedByDate = {};
+
+    rawOrders.forEach(order => {
+      const dateStr = new Date(order.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = {
+          date: dateStr,
+          totalRevenue: 0,
+          totalOrders: 0,
+          orders: []
+        };
+      }
+      groupedByDate[dateStr].totalRevenue += order.total;
+      groupedByDate[dateStr].totalOrders += 1;
+      groupedByDate[dateStr].orders.push(order);
+    });
+
+    // Convert object to array sorted by date descending
+    const dateWiseData = Object.values(groupedByDate).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json({
+      dateWiseData
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };

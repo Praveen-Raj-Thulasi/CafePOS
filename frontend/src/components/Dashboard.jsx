@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../contexts/SocketContext';
-import { DollarSign, Activity, Users, Coffee, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, Activity, Users, Coffee, Plus, Trash2, ShieldAlert, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [newEmp, setNewEmp] = useState({ name: '', email: '', password: '', role: 'Cashier' });
   const [empError, setEmpError] = useState('');
   const [empSuccess, setEmpSuccess] = useState('');
+  const [verifications, setVerifications] = useState([]);
 
   const fetchAnalytics = async () => {
     try {
@@ -130,7 +131,7 @@ const Dashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
         <MetricCard 
           title="Revenue Today" 
-          value={`$${metrics.revenueToday.toLocaleString('en-US', {minimumFractionDigits: 2})}`} 
+          value={`₹${metrics.revenueToday.toLocaleString('en-US', {minimumFractionDigits: 2})}`} 
           icon={<DollarSign size={24} />} 
           color="var(--status-green)" 
         />
@@ -171,7 +172,7 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                  <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <RechartsTooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
                   <Area type="monotone" dataKey="sales" stroke="var(--accent-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />

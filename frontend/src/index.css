@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Montserrat:wght@300;400;500&display=swap');
 
 :root {
   /* Soft Light Mode Theme */
@@ -6,6 +6,7 @@
   --card-bg: #ffffff;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
+  --column-bg: rgba(255, 255, 255, 0.4);
   
   /* Accents */
   --accent-primary: #4f46e5; /* Vibrant Indigo/Blurple */
@@ -24,6 +25,22 @@
   margin: 0;
   padding: 0;
 }
+
+body.dark {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --column-bg: rgba(255, 255, 255, 0.05);
+  
+  --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+body.dark .glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 
 body {
   font-family: 'Inter', sans-serif;

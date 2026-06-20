@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, FileText, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, ChevronDown, ChevronUp, Calendar, ShoppingBag } from 'lucide-react';
 
 const Reports = () => {
   const [reportType, setReportType] = useState('daily');
@@ -8,7 +8,11 @@ const Reports = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [message, setMessage] = useState('');
 
-  const generateReport = async () => {
+  // Analytics Data State
+  const [dateWiseData, setDateWiseData] = useState([]);
+  const [expandedDates, setExpandedDates] = useState({});
+
+  const fetchAnalytics = async () => {
     setIsGenerating(true);
     setMessage('');
     
@@ -18,7 +22,6 @@ const Reports = () => {
       
       if (reportType === 'custom') {
         if (!startDate || !endDate) {
-          setMessage('Please select both start and end dates.');
           setIsGenerating(false);
           return;
         }
@@ -31,49 +34,63 @@ const Reports = () => {
       
       if (!response.ok) throw new Error('Failed to fetch report data');
       
-      const orders = await response.json();
+      const data = await response.json();
+      setDateWiseData(data.dateWiseData || []);
+      setExpandedDates({});
       
-      if (orders.length === 0) {
-        setMessage('No completed orders found for this time period.');
-        setIsGenerating(false);
-        return;
+      if (!data.dateWiseData || data.dateWiseData.length === 0) {
+        if (reportType !== 'custom') setMessage('No data found for this period.');
       }
-
-      downloadCSV(orders);
-      setMessage(`Successfully downloaded report with ${orders.length} orders.`);
     } catch (err) {
       console.error(err);
-      setMessage('Error generating report.');
+      setMessage('Error fetching analytics.');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const downloadCSV = (orders) => {
-    // Define CSV Headers
-    const headers = ['Order ID', 'Date', 'Time', 'Table', 'Channel', 'Total Amount ($)', 'Items'];
+  useEffect(() => {
+    if (reportType !== 'custom') {
+      fetchAnalytics();
+    }
+  }, [reportType]);
+
+  const toggleDate = (dateStr) => {
+    setExpandedDates(prev => ({
+      ...prev,
+      [dateStr]: !prev[dateStr]
+    }));
+  };
+
+  const downloadCSV = () => {
+    if (dateWiseData.length === 0) {
+      setMessage('No data to download.');
+      return;
+    }
+
+    const headers = ['Order ID', 'Date', 'Time', 'Table', 'Channel', 'Total Amount (₹)', 'Items'];
+    const rows = [];
     
-    // Map order data into CSV rows
-    const rows = orders.map(order => {
-      const date = new Date(order.updatedAt).toLocaleDateString();
-      const time = new Date(order.updatedAt).toLocaleTimeString();
-      const table = order.table ? `T${order.table.tableNumber}` : 'N/A';
-      const itemsString = order.items.map(i => `${i.quantity}x ${i.product?.name || 'Unknown'}`).join(' | ');
-      
-      return [
-        order._id,
-        date,
-        time,
-        table,
-        order.channel,
-        order.total.toFixed(2),
-        `"${itemsString}"` // Wrapped in quotes to handle commas inside the string
-      ].join(',');
+    dateWiseData.forEach(day => {
+      day.orders.forEach(order => {
+        const date = new Date(order.updatedAt).toLocaleDateString();
+        const time = new Date(order.updatedAt).toLocaleTimeString();
+        const table = order.table ? `T${order.table.tableNumber}` : 'N/A';
+        const itemsString = order.items?.map(i => `${i.quantity}x ${i.product?.name || 'Unknown'}`).join(' | ') || 'No Items';
+        
+        rows.push([
+          order._id,
+          date,
+          time,
+          table,
+          order.channel,
+          order.total.toFixed(2),
+          `"${itemsString}"`
+        ].join(','));
+      });
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
-    
-    // Create Blob and Download Link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -85,99 +102,169 @@ const Reports = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    const totalOrders = dateWiseData.reduce((sum, day) => sum + day.totalOrders, 0);
+    setMessage(`Successfully downloaded ${totalOrders} orders.`);
   };
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: 'var(--bg-color)', minHeight: '100vh' }}>
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Sales Reports</h1>
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Export and download historical sales data</p>
+    <div style={{ padding: '2rem', backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Sales Reports</h1>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>View your daily sales history and order details.</p>
+        </div>
+        <button 
+          onClick={downloadCSV}
+          disabled={dateWiseData.length === 0}
+          className="pill-btn" 
+          style={{ padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', opacity: dateWiseData.length === 0 ? 0.5 : 1 }}
+        >
+          <Download size={20} />
+          Export CSV
+        </button>
       </header>
 
-      <div className="glass-card" style={{ padding: '2rem', maxWidth: '600px' }}>
-        
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-          <button 
-            onClick={() => setReportType('daily')}
-            style={{
-              flex: 1, padding: '1rem', borderRadius: '10px', border: '1px solid #e5e7eb', cursor: 'pointer',
-              backgroundColor: reportType === 'daily' ? 'var(--accent-primary)' : 'white',
-              color: reportType === 'daily' ? 'white' : 'var(--text-primary)',
-              fontWeight: 600, transition: 'all 0.2s'
-            }}
-          >
-            Daily Report
-          </button>
-          <button 
-            onClick={() => setReportType('weekly')}
-            style={{
-              flex: 1, padding: '1rem', borderRadius: '10px', border: '1px solid #e5e7eb', cursor: 'pointer',
-              backgroundColor: reportType === 'weekly' ? 'var(--accent-primary)' : 'white',
-              color: reportType === 'weekly' ? 'white' : 'var(--text-primary)',
-              fontWeight: 600, transition: 'all 0.2s'
-            }}
-          >
-            Weekly Report
-          </button>
-          <button 
-            onClick={() => setReportType('custom')}
-            style={{
-              flex: 1, padding: '1rem', borderRadius: '10px', border: '1px solid #e5e7eb', cursor: 'pointer',
-              backgroundColor: reportType === 'custom' ? 'var(--accent-primary)' : 'white',
-              color: reportType === 'custom' ? 'white' : 'var(--text-primary)',
-              fontWeight: 600, transition: 'all 0.2s'
-            }}
-          >
-            Custom Range
-          </button>
+      {/* Control Panel */}
+      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', backgroundColor: '#f3f4f6', padding: '0.5rem', borderRadius: '10px' }}>
+          {['daily', 'weekly', 'custom'].map(type => (
+            <button 
+              key={type}
+              onClick={() => setReportType(type)}
+              style={{
+                padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                backgroundColor: reportType === type ? 'white' : 'transparent',
+                color: reportType === type ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                fontWeight: 600, boxShadow: reportType === type ? '0 2px 5px rgba(0,0,0,0.05)' : 'none',
+                textTransform: 'capitalize'
+              }}
+            >
+              {type}
+            </button>
+          ))}
         </div>
 
         {reportType === 'custom' && (
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Start Date</label>
-              <input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }} 
-              />
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Start Date</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }} />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>End Date</label>
-              <input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }} 
-              />
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>End Date</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }} />
             </div>
+            <button className="pill-btn" onClick={fetchAnalytics} style={{ padding: '0.75rem 1.5rem', height: 'fit-content' }}>
+              Apply
+            </button>
           </div>
         )}
-
-        {message && (
-          <div style={{ 
-            padding: '1rem', 
-            marginBottom: '1.5rem', 
-            borderRadius: '8px', 
-            backgroundColor: message.includes('Success') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-            color: message.includes('Success') ? 'var(--status-green)' : 'var(--status-red)'
-          }}>
-            {message}
-          </div>
-        )}
-
-        <button 
-          onClick={generateReport}
-          disabled={isGenerating}
-          className="pill-btn" 
-          style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', opacity: isGenerating ? 0.7 : 1 }}
-        >
-          <Download size={22} />
-          {isGenerating ? 'Generating CSV...' : 'Download CSV Report'}
-        </button>
-
+        
+        {message && <span style={{ color: message.includes('Success') ? 'var(--status-green)' : 'var(--status-red)', fontWeight: 500 }}>{message}</span>}
       </div>
+
+      {isGenerating ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>Loading Reports...</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {dateWiseData.length === 0 ? (
+            <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              No completed orders found for the selected time period.
+            </div>
+          ) : (
+            dateWiseData.map(day => (
+              <div key={day.date} className="glass-card" style={{ overflow: 'hidden' }}>
+                {/* Date Row Header */}
+                <div 
+                  onClick={() => toggleDate(day.date)}
+                  style={{ 
+                    padding: '1.5rem 2rem', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: expandedDates[day.date] ? '#f8fafc' : 'white',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ padding: '0.75rem', backgroundColor: '#eff6ff', color: '#3b82f6', borderRadius: '10px' }}>
+                      <Calendar size={24} />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.25rem', color: 'var(--text-primary)' }}>{day.date}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        <ShoppingBag size={14} /> {day.totalOrders} Orders
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: 600 }}>Revenue</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--status-green)' }}>
+                        ₹{day.totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                      </div>
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      {expandedDates[day.date] ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded Order Details */}
+                {expandedDates[day.date] && (
+                  <div style={{ borderTop: '1px solid #e5e7eb', padding: '0' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f9fafb', color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                          <th style={{ padding: '1rem 2rem', textAlign: 'left', fontWeight: 600 }}>Time</th>
+                          <th style={{ padding: '1rem 2rem', textAlign: 'left', fontWeight: 600 }}>Order No.</th>
+                          <th style={{ padding: '1rem 2rem', textAlign: 'left', fontWeight: 600 }}>Table / Channel</th>
+                          <th style={{ padding: '1rem 2rem', textAlign: 'left', fontWeight: 600 }}>Items</th>
+                          <th style={{ padding: '1rem 2rem', textAlign: 'right', fontWeight: 600 }}>Total (₹)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {day.orders.map(order => (
+                          <tr key={order._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '1rem 2rem', color: 'var(--text-secondary)' }}>
+                              {new Date(order.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </td>
+                            <td style={{ padding: '1rem 2rem', fontWeight: 500, color: 'var(--accent-primary)' }}>
+                              {order.orderNumber}
+                            </td>
+                            <td style={{ padding: '1rem 2rem' }}>
+                              <div style={{ fontWeight: 600 }}>{order.table ? `Table ${order.table.tableNumber}` : 'N/A'}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{order.channel}</div>
+                            </td>
+                            <td style={{ padding: '1rem 2rem', maxWidth: '300px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                {order.items?.map(item => (
+                                  <div key={item._id} style={{ fontSize: '0.9rem' }}>
+                                    <span style={{ fontWeight: 600, marginRight: '0.5rem' }}>{item.quantity}x</span>
+                                    {item.product?.name || 'Unknown Item'}
+                                  </div>
+                                ))}
+                                {(!order.items || order.items.length === 0) && <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No Items Recorded</span>}
+                              </div>
+                            </td>
+                            <td style={{ padding: '1rem 2rem', textAlign: 'right', fontWeight: 700 }}>
+                              ₹{order.total.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };
