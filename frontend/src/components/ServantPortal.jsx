@@ -15,16 +15,16 @@ const ServantPortal = () => {
   const [openBill, setOpenBill] = useState(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const navigate = useNavigate();
-  const currentRole = localStorage.getItem('userRole');
+  const currentRole = sessionStorage.getItem('userRole');
 
   const handleLogout = () => {
-    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('userRole');
     navigate('/login');
   };
 
   const fetchActiveTables = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/floors', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -47,7 +47,7 @@ const ServantPortal = () => {
 
   const fetchPendingDeliveries = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/orders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -93,7 +93,7 @@ const ServantPortal = () => {
     if (!activeDelivery) return;
 
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch(`http://localhost:5000/api/orders/${activeDelivery._id}/status`, {
         method: 'PUT',
         headers: { 
@@ -163,7 +163,7 @@ const ServantPortal = () => {
       
       {/* Sleek Top Navigation */}
       <header style={{ 
-        backgroundColor: 'white', 
+        backgroundColor: 'var(--card-bg)', 
         padding: '1rem 2rem', 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -174,7 +174,7 @@ const ServantPortal = () => {
         zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ padding: '0.5rem', backgroundColor: 'var(--accent-primary)', color: 'white', borderRadius: '10px' }}>
+          <div style={{ padding: '0.5rem', backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)', borderRadius: '10px' }}>
             <Navigation size={24} />
           </div>
           <div>
@@ -214,7 +214,7 @@ const ServantPortal = () => {
           
           {!activeDelivery ? (
             <div style={{ 
-              backgroundColor: 'white', borderRadius: '20px', padding: '4rem 2rem', 
+              backgroundColor: 'var(--card-bg)', borderRadius: '20px', padding: '4rem 2rem', 
               textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', border: '1px dashed #e2e8f0' 
             }}>
               <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.5 }}>☕</div>
@@ -223,7 +223,7 @@ const ServantPortal = () => {
             </div>
           ) : (
             <div style={{ 
-              backgroundColor: 'white', borderRadius: '20px', padding: '2.5rem', 
+              backgroundColor: 'var(--card-bg)', borderRadius: '20px', padding: '2.5rem', 
               textAlign: 'center', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.15)', 
               border: '2px solid var(--status-orange)', position: 'relative', overflow: 'hidden'
             }}>
@@ -245,7 +245,7 @@ const ServantPortal = () => {
                 style={{ 
                   width: '100%', maxWidth: '400px', margin: '0 auto', padding: '1.25rem', fontSize: '1.2rem', 
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', 
-                  backgroundColor: 'var(--status-green)', color: 'white', border: 'none', borderRadius: '15px',
+                  backgroundColor: 'var(--status-green)', color: 'var(--card-bg)', border: 'none', borderRadius: '15px',
                   fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
                   transition: 'transform 0.2s'
                 }}
@@ -262,13 +262,13 @@ const ServantPortal = () => {
         <section>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h3 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Take Payment</h3>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', backgroundColor: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', backgroundColor: 'var(--card-bg)', padding: '0.25rem 0.75rem', borderRadius: '99px', border: '1px solid var(--border-color)' }}>
               {activeTables.length} Active {activeTables.length === 1 ? 'Table' : 'Tables'}
             </span>
           </div>
 
           {activeTables.length === 0 ? (
-            <div style={{ backgroundColor: 'white', borderRadius: '15px', padding: '2rem', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+            <div style={{ backgroundColor: 'var(--card-bg)', borderRadius: '15px', padding: '2rem', textAlign: 'center', border: '1px solid var(--border-color)' }}>
               <p style={{ margin: 0, color: 'var(--text-secondary)' }}>There are no active tables to collect payment from.</p>
             </div>
           ) : (
@@ -278,12 +278,12 @@ const ServantPortal = () => {
                   key={table._id}
                   onClick={() => handleTableClick(table)}
                   style={{ 
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--card-bg)',
                     padding: '1.5rem', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '15px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -295,7 +295,7 @@ const ServantPortal = () => {
                     e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.1)';
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
                 >

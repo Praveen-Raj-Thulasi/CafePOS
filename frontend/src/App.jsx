@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 import { SocketProvider } from './contexts/SocketContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Login from './components/Login';
@@ -7,6 +8,7 @@ import OrderView from './components/OrderView';
 import KDS from './components/KDS';
 import ServantPortal from './components/ServantPortal';
 import CustomerMenu from './components/CustomerMenu';
+import CustomerDisplay from './components/CustomerDisplay';
 import Dashboard from './components/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import SharedLayout from './components/SharedLayout';
@@ -19,6 +21,21 @@ import EmployeeManager from './components/EmployeeManager';
 import ThemeToggle from './components/ThemeToggle';
 
 function App() {
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const cards = document.querySelectorAll('.glass-card');
+      for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <SocketProvider>
       <NotificationProvider>
@@ -31,6 +48,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               
               {/* Public Routes for Customers & Printing */}
+              <Route path="/customer-display" element={<CustomerDisplay />} />
               <Route path="/qr/:tableId" element={<QRGenerator />} />
               <Route path="/menu/:tableId" element={<CustomerMenu />} />
 

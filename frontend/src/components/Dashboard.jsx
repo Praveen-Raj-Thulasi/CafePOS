@@ -17,15 +17,11 @@ const Dashboard = () => {
     popularItems: []
   });
 
-  const [employees, setEmployees] = useState([]);
-  const [newEmp, setNewEmp] = useState({ name: '', email: '', password: '', role: 'Cashier' });
-  const [empError, setEmpError] = useState('');
-  const [empSuccess, setEmpSuccess] = useState('');
-  const [verifications, setVerifications] = useState([]);
+
 
   const fetchAnalytics = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/analytics', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -38,24 +34,8 @@ const Dashboard = () => {
     }
   };
 
-  const fetchEmployees = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setEmployees(data);
-      }
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-    }
-  };
-
   useEffect(() => {
     fetchAnalytics();
-    fetchEmployees();
     
     if (!socket) return;
 
@@ -76,33 +56,7 @@ const Dashboard = () => {
     };
   }, [socket]);
 
-  const handleCreateEmployee = async (e) => {
-    e.preventDefault();
-    setEmpError('');
-    setEmpSuccess('');
-    try {
-      const token = localStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify(newEmp)
-      });
-      
-      const data = await response.json();
-      if (response.ok) {
-        setEmpSuccess('Employee created successfully!');
-        setNewEmp({ name: '', email: '', password: '', role: 'Cashier' });
-        fetchEmployees();
-      } else {
-        setEmpError(data.message || 'Failed to create employee');
-      }
-    } catch (error) {
-      setEmpError('Cannot connect to server');
-    }
-  };
+
 
   const MetricCard = ({ title, value, icon, color }) => (
     <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: `6px solid ${color}` }}>
@@ -223,89 +177,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      {/* Employee Management Section */}
-      <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
-        <h2 style={{ margin: '0 0 1.5rem 0', color: 'var(--text-primary)' }}>Employee Management</h2>
-        
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          
-          {/* Create Employee Form */}
-          <div style={{ flex: '1 1 300px', backgroundColor: '#f9fafb', padding: '1.5rem', borderRadius: '15px' }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem' }}>Add New Employee</h3>
-            {empError && <div style={{ color: 'var(--status-red)', marginBottom: '1rem', fontSize: '0.9rem' }}>{empError}</div>}
-            {empSuccess && <div style={{ color: 'var(--status-green)', marginBottom: '1rem', fontSize: '0.9rem' }}>{empSuccess}</div>}
-            
-            <form onSubmit={handleCreateEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input 
-                type="text" 
-                placeholder="Full Name" 
-                value={newEmp.name}
-                onChange={e => setNewEmp({...newEmp, name: e.target.value})}
-                required 
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              />
-              <input 
-                type="email" 
-                placeholder="Email Address" 
-                value={newEmp.email}
-                onChange={e => setNewEmp({...newEmp, email: e.target.value})}
-                required 
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              />
-              <input 
-                type="password" 
-                placeholder="Password" 
-                value={newEmp.password}
-                onChange={e => setNewEmp({...newEmp, password: e.target.value})}
-                required 
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              />
-              <select 
-                value={newEmp.role}
-                onChange={e => setNewEmp({...newEmp, role: e.target.value})}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              >
-                <option value="Cashier">Cashier</option>
-                <option value="Kitchen">Kitchen</option>
-                <option value="Servant">Servant</option>
-              </select>
-              <button type="submit" className="pill-btn" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                <Plus size={18} /> Add Employee
-              </button>
-            </form>
-          </div>
 
-          {/* Employee List */}
-          <div style={{ flex: '2 1 400px' }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem' }}>Active Staff Members</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {employees.length === 0 ? (
-                <div style={{ color: 'var(--text-secondary)' }}>No employees found.</div>
-              ) : (
-                employees.map(emp => (
-                  <div key={emp._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: 'white', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{emp.name}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{emp.email}</div>
-                    </div>
-                    <span style={{ 
-                      padding: '0.25rem 0.75rem', 
-                      borderRadius: '99px', 
-                      fontSize: '0.75rem', 
-                      fontWeight: 600,
-                      backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                      color: 'var(--accent-primary)'
-                    }}>
-                      {emp.role}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-        </div>
-      </div>
 
     </div>
   );

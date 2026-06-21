@@ -41,7 +41,7 @@ const MenuManager = () => {
   }, []);
 
   const getHeaders = () => {
-    const token = localStorage.getItem('userToken');
+    const token = sessionStorage.getItem('userToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -194,7 +194,7 @@ const MenuManager = () => {
               placeholder="Category Name" 
               value={catName} 
               onChange={e => setCatName(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Color Theme:</label>
@@ -205,7 +205,7 @@ const MenuManager = () => {
                 <Save size={16} /> Save
               </button>
               {editingCategory && (
-                <button onClick={cancelCategoryEdit} style={{ padding: '0.75rem', borderRadius: '50px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer' }}><X size={16} /></button>
+                <button onClick={cancelCategoryEdit} style={{ padding: '0.75rem', borderRadius: '50px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}><X size={16} /></button>
               )}
             </div>
           </div>
@@ -224,14 +224,14 @@ const MenuManager = () => {
                     display: 'flex', 
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    backgroundColor: activeCatId === cat._id ? (cat.color || 'var(--accent-primary)') : 'white',
-                    color: activeCatId === cat._id ? 'white' : 'var(--text-primary)',
+                    backgroundColor: activeCatId === cat._id ? (cat.color || 'var(--accent-primary)') : 'var(--card-bg)',
+                    color: activeCatId === cat._id ? 'var(--card-bg)' : 'var(--text-primary)',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
                   }}
                 >
                   <span style={{ fontWeight: 600 }}>{cat.name}</span>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={(e) => { e.stopPropagation(); openCategoryEdit(cat); }} style={{ background: 'none', border: 'none', color: activeCatId === cat._id ? 'white' : 'var(--text-secondary)', cursor: 'pointer' }}><Edit2 size={16} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); openCategoryEdit(cat); }} style={{ background: 'none', border: 'none', color: activeCatId === cat._id ? 'var(--card-bg)' : 'var(--text-secondary)', cursor: 'pointer' }}><Edit2 size={16} /></button>
                     <button onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat._id); }} style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ const MenuManager = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0 }}>{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
               {editingProduct && (
-                <button onClick={cancelProductEdit} style={{ padding: '0.5rem', borderRadius: '50px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+                <button onClick={cancelProductEdit} style={{ padding: '0.5rem', borderRadius: '50px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
               )}
             </div>
             
@@ -255,17 +255,17 @@ const MenuManager = () => {
               <input 
                 type="text" placeholder="Product Name" 
                 value={prodForm.name} onChange={e => setProdForm({...prodForm, name: e.target.value})}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
               />
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <input 
                   type="number" placeholder="Price (₹)" 
                   value={prodForm.price} onChange={e => setProdForm({...prodForm, price: e.target.value})}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', flex: 1 }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', flex: 1 }}
                 />
                 <select 
                   value={prodForm.unit} onChange={e => setProdForm({...prodForm, unit: e.target.value})}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', flex: 1, backgroundColor: 'white' }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', flex: 1, backgroundColor: 'var(--card-bg)' }}
                 >
                   <option value="per piece">per piece</option>
                   <option value="per kg">per kg</option>
@@ -276,12 +276,12 @@ const MenuManager = () => {
               <input 
                 type="number" placeholder="Tax (%)" 
                 value={prodForm.tax} onChange={e => setProdForm({...prodForm, tax: e.target.value})}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
               />
               <input 
                 type="text" placeholder="Description" 
                 value={prodForm.description} onChange={e => setProdForm({...prodForm, description: e.target.value})}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
               />
             </div>
             
@@ -302,7 +302,7 @@ const MenuManager = () => {
             {activeCatId ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
                 {currentCategoryProducts.map(product => (
-                  <div key={product._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e5e7eb', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                  <div key={product._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
                       <button onClick={() => openProductEdit(product)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><Edit2 size={16} /></button>
                       <button onClick={() => handleDeleteProduct(product._id)} style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}><Trash2 size={16} /></button>

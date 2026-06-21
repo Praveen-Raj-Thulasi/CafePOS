@@ -19,7 +19,7 @@ const QRGenerator = () => {
       alignItems: 'center', 
       justifyContent: 'center', 
       minHeight: '100vh', 
-      backgroundColor: '#f3f4f6',
+      backgroundColor: 'var(--hover-bg)',
       padding: '2rem'
     }}>
       <div 
@@ -27,7 +27,7 @@ const QRGenerator = () => {
         className="glass-card" 
         style={{ 
           padding: '4rem', 
-          backgroundColor: 'white', 
+          backgroundColor: 'var(--card-bg)', 
           textAlign: 'center',
           boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
         }}

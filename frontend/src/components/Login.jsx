@@ -22,9 +22,9 @@ const Login = () => {
       const data = await response.json();
       
       if (response.ok) {
-        localStorage.setItem('userToken', data.token);
-        localStorage.setItem('userRole', data.role);
-        localStorage.setItem('userName', data.name);
+        sessionStorage.setItem('userToken', data.token);
+        sessionStorage.setItem('userRole', data.role);
+        sessionStorage.setItem('userName', data.name);
         
         if (data.role === 'Admin') navigate('/dashboard');
         else if (data.role === 'Cashier') navigate('/floor');
@@ -41,7 +41,7 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: '#f8fafc' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: 'var(--sub-bg)' }}>
       
       {/* Left Branding Side */}
       <div style={{ 
@@ -53,7 +53,7 @@ const Login = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'white',
+        color: 'var(--card-bg)',
         padding: '3rem',
         position: 'relative'
       }}>
@@ -94,7 +94,7 @@ const Login = () => {
         <div style={{ 
           width: '100%', 
           maxWidth: '440px', 
-          backgroundColor: 'white', 
+          backgroundColor: 'var(--card-bg)', 
           padding: '3.5rem 3rem', 
           borderRadius: '24px', 
           boxShadow: '0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
@@ -130,7 +130,7 @@ const Login = () => {
                     boxSizing: 'border-box', backgroundColor: '#f4f4f5', color: '#27272a',
                     transition: 'all 0.2s ease', fontFamily: '"Inter", sans-serif'
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = '#d4d4d8'; e.target.style.backgroundColor = 'white'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#d4d4d8'; e.target.style.backgroundColor = 'var(--card-bg)'; }}
                   onBlur={(e) => { e.target.style.borderColor = 'transparent'; e.target.style.backgroundColor = '#f4f4f5'; }}
                 />
               </div>
@@ -152,7 +152,7 @@ const Login = () => {
                     boxSizing: 'border-box', backgroundColor: '#f4f4f5', color: '#27272a',
                     transition: 'all 0.2s ease', fontFamily: '"Inter", sans-serif'
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = '#d4d4d8'; e.target.style.backgroundColor = 'white'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#d4d4d8'; e.target.style.backgroundColor = 'var(--card-bg)'; }}
                   onBlur={(e) => { e.target.style.borderColor = 'transparent'; e.target.style.backgroundColor = '#f4f4f5'; }}
                 />
               </div>
@@ -160,7 +160,7 @@ const Login = () => {
             
             <button type="submit" style={{ 
               width: '100%', padding: '1.1rem', fontSize: '1.05rem', fontWeight: 600,
-              backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', 
+              backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)', border: 'none', 
               borderRadius: '99px', marginTop: '1rem', cursor: 'pointer',
               transition: 'all 0.2s ease', fontFamily: '"Montserrat", sans-serif', letterSpacing: '0.5px',
               boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)'

@@ -6,7 +6,7 @@ import { LogOut, Coffee, CheckCircle, Plus, Trash2, QrCode } from 'lucide-react'
 const FloorPlan = () => {
   const navigate = useNavigate();
   const socket = useSocket();
-  const currentRole = localStorage.getItem('userRole');
+  const currentRole = sessionStorage.getItem('userRole');
   const [floors, setFloors] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
   const [newFloorName, setNewFloorName] = useState('');
@@ -14,7 +14,7 @@ const FloorPlan = () => {
 
   const fetchFloors = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/floors', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -29,7 +29,7 @@ const FloorPlan = () => {
 
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/orders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -67,7 +67,7 @@ const FloorPlan = () => {
   const completeBill = async (e, orderId) => {
     e.stopPropagation();
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 
@@ -89,7 +89,7 @@ const FloorPlan = () => {
     e.preventDefault();
     if (!newFloorName.trim()) return;
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/floors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -107,7 +107,7 @@ const FloorPlan = () => {
   const handleDeleteFloor = async (id) => {
     if (!window.confirm("Delete this floor and ALL its tables?")) return;
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch(`http://localhost:5000/api/floors/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -122,7 +122,7 @@ const FloorPlan = () => {
     e.preventDefault();
     if (!newTable.tableNumber.trim()) return;
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -141,7 +141,7 @@ const FloorPlan = () => {
     e.stopPropagation();
     if (!window.confirm("Delete this table?")) return;
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch(`http://localhost:5000/api/tables/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -173,7 +173,7 @@ const FloorPlan = () => {
                 placeholder="New Floor Name (e.g. Ground Floor)" 
                 value={newFloorName}
                 onChange={e => setNewFloorName(e.target.value)}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb', flex: 1, maxWidth: '400px' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', flex: 1, maxWidth: '400px' }}
               />
               <button type="submit" className="pill-btn" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Plus size={18} /> Add Floor
@@ -185,7 +185,7 @@ const FloorPlan = () => {
         {/* Floors and their Tables */}
         {floors.map(floor => (
           <div key={floor._id} className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-primary)' }}>{floor.name}</h3>
               {currentRole === 'Admin' && (
                 <button onClick={() => handleDeleteFloor(floor._id)} style={{ padding: '0.5rem', color: 'var(--status-red)', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -197,8 +197,8 @@ const FloorPlan = () => {
             {/* Create Table Form */}
             {currentRole === 'Admin' && (
               <form onSubmit={(e) => handleCreateTable(floor._id, e)} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <input type="text" placeholder="Table #" value={newTable.tableNumber} onChange={e => setNewTable({...newTable, tableNumber: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb', width: '120px' }} required />
-                <input type="number" placeholder="Seats" value={newTable.seats} onChange={e => setNewTable({...newTable, seats: parseInt(e.target.value)})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #e5e7eb', width: '100px' }} required min="1" />
+                <input type="text" placeholder="Table #" value={newTable.tableNumber} onChange={e => setNewTable({...newTable, tableNumber: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '120px' }} required />
+                <input type="number" placeholder="Seats" value={newTable.seats} onChange={e => setNewTable({...newTable, seats: parseInt(e.target.value)})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100px' }} required min="1" />
                 <button type="submit" className="pill-btn" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--text-primary)' }}>
                   <Plus size={18} /> Add Table
                 </button>
@@ -224,7 +224,7 @@ const FloorPlan = () => {
                       justifyContent: 'center',
                       cursor: 'pointer',
                       borderTop: `6px solid ${isActive ? 'var(--status-green)' : 'var(--status-red)'}`,
-                      backgroundColor: isActive ? '#ecfdf5' : 'white',
+                      backgroundColor: isActive ? 'var(--highlight-green)' : 'var(--card-bg)',
                       position: 'relative'
                     }}
                   >

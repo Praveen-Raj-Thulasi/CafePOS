@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const promotionRoutes = require('./routes/promotionRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
 
 // Connect to Database
 connectDB();
@@ -49,6 +50,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 // Base route
 app.get('/', (req, res) => {
@@ -61,6 +63,19 @@ io.on('connection', (socket) => {
   
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
+  });
+
+  // CFD Relays
+  socket.on('cfd_update', (data) => {
+    socket.broadcast.emit('cfd_update', data);
+  });
+  
+  socket.on('cfd_payment', (data) => {
+    socket.broadcast.emit('cfd_payment', data);
+  });
+  
+  socket.on('cfd_complete', (data) => {
+    socket.broadcast.emit('cfd_complete', data);
   });
 });
 

@@ -13,7 +13,7 @@ const CouponsManager = ({ embedded = false }) => {
 
   const fetchCoupons = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/coupons', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -31,7 +31,7 @@ const CouponsManager = ({ embedded = false }) => {
   }, []);
 
   const getHeaders = () => {
-    const token = localStorage.getItem('userToken');
+    const token = sessionStorage.getItem('userToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -118,13 +118,13 @@ const CouponsManager = ({ embedded = false }) => {
               placeholder="Coupon Code (e.g. SUMMER10)" 
               value={code} 
               onChange={e => setCode(e.target.value.toUpperCase())}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', textTransform: 'uppercase' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', textTransform: 'uppercase' }}
             />
             
             <select 
               value={discountType} 
               onChange={e => setDiscountType(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
             >
               <option value="percent">Percentage (%)</option>
               <option value="flat">Flat Amount (₹)</option>
@@ -135,7 +135,7 @@ const CouponsManager = ({ embedded = false }) => {
               placeholder={discountType === 'percent' ? "Discount %" : "Discount Amount (₹)"} 
               value={discountValue} 
               onChange={e => setDiscountValue(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
             
             <button className="pill-btn" onClick={handleSaveCoupon} style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
@@ -151,7 +151,7 @@ const CouponsManager = ({ embedded = false }) => {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
               {coupons.map(coupon => (
-                <div key={coupon._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e5e7eb', position: 'relative', opacity: coupon.isActive ? 1 : 0.6 }}>
+                <div key={coupon._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', position: 'relative', opacity: coupon.isActive ? 1 : 0.6 }}>
                   <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
                     <button onClick={() => toggleStatus(coupon._id)} style={{ background: 'none', border: 'none', color: coupon.isActive ? 'var(--status-orange)' : 'var(--status-green)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
                       {coupon.isActive ? 'Deactivate' : 'Activate'}

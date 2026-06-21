@@ -18,7 +18,7 @@ const PromotionsManager = ({ embedded = false }) => {
 
   const fetchPromotions = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/promotions', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -33,7 +33,7 @@ const PromotionsManager = ({ embedded = false }) => {
 
   const fetchProducts = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/products', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -53,7 +53,7 @@ const PromotionsManager = ({ embedded = false }) => {
   }, []);
 
   const getHeaders = () => {
-    const token = localStorage.getItem('userToken');
+    const token = sessionStorage.getItem('userToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -148,13 +148,13 @@ const PromotionsManager = ({ embedded = false }) => {
               placeholder="Promotion Name (e.g. Weekend Special)" 
               value={name} 
               onChange={e => setName(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
             
             <select 
               value={type} 
               onChange={e => setType(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
             >
               <option value="Order">Order Level (Min Cart Total)</option>
               <option value="Product">Product Level (Min Item Qty)</option>
@@ -166,14 +166,14 @@ const PromotionsManager = ({ embedded = false }) => {
                 placeholder="Minimum Order Amount (₹)" 
                 value={minOrderAmount} 
                 onChange={e => setMinOrderAmount(e.target.value)}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
               />
             ) : (
               <>
                 <select 
                   value={targetProduct} 
                   onChange={e => setTargetProduct(e.target.value)}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white' }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
                 >
                   {products.map(p => (
                     <option key={p._id} value={p._id}>{p.name}</option>
@@ -184,18 +184,18 @@ const PromotionsManager = ({ embedded = false }) => {
                   placeholder="Minimum Quantity to Trigger" 
                   value={minQuantity} 
                   onChange={e => setMinQuantity(e.target.value)}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
                 />
               </>
             )}
             
-            <div style={{ borderTop: '1px solid #e5e7eb', margin: '0.5rem 0' }}></div>
+            <div style={{ borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }}></div>
             <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Discount Details</h4>
 
             <select 
               value={discountType} 
               onChange={e => setDiscountType(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
             >
               <option value="percent">Percentage OFF (%)</option>
               <option value="flat">Flat Amount OFF (₹)</option>
@@ -206,7 +206,7 @@ const PromotionsManager = ({ embedded = false }) => {
               placeholder={discountType === 'percent' ? "Discount %" : "Discount Amount (₹)"} 
               value={discountValue} 
               onChange={e => setDiscountValue(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
             
             <button className="pill-btn" onClick={handleSavePromotion} style={{ width: '100%', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
@@ -222,7 +222,7 @@ const PromotionsManager = ({ embedded = false }) => {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
               {promotions.map(promo => (
-                <div key={promo._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e5e7eb', position: 'relative', opacity: promo.isActive ? 1 : 0.6 }}>
+                <div key={promo._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', position: 'relative', opacity: promo.isActive ? 1 : 0.6 }}>
                   <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
                     <button onClick={() => toggleStatus(promo._id)} style={{ background: 'none', border: 'none', color: promo.isActive ? 'var(--status-orange)' : 'var(--status-green)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
                       {promo.isActive ? 'Deactivate' : 'Activate'}
@@ -231,7 +231,7 @@ const PromotionsManager = ({ embedded = false }) => {
                   </div>
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', color: 'var(--accent-primary)', paddingRight: '80px' }}>{promo.name}</h4>
                   
-                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#4b5563' }}>
+                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                     {promo.type === 'Order' ? (
                       <span><strong>Trigger:</strong> Order crosses ₹{promo.minOrderAmount}</span>
                     ) : (

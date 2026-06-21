@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
 const OrderEvent = require('../models/OrderEvent');
 const Table = require('../models/Table');
+const POSSession = require('../models/POSSession');
 
 const generateOrderNumber = () => {
   return 'ORD-' + Math.floor(10000 + Math.random() * 90000);

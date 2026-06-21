@@ -14,7 +14,7 @@ const EmployeeManager = () => {
 
   const fetchEmployees = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const res = await fetch('http://localhost:5000/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -32,7 +32,7 @@ const EmployeeManager = () => {
   }, []);
 
   const getHeaders = () => {
-    const token = localStorage.getItem('userToken');
+    const token = sessionStorage.getItem('userToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -119,7 +119,7 @@ const EmployeeManager = () => {
               placeholder="Full Name" 
               value={name} 
               onChange={e => setName(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
 
             <input 
@@ -127,7 +127,7 @@ const EmployeeManager = () => {
               placeholder="Email Address" 
               value={email} 
               onChange={e => setEmail(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
 
             <input 
@@ -135,13 +135,13 @@ const EmployeeManager = () => {
               placeholder="Password" 
               value={password} 
               onChange={e => setPassword(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
             />
             
             <select 
               value={role} 
               onChange={e => setRole(e.target.value)}
-              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white' }}
+              style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
             >
               <option value="Admin">Admin</option>
               <option value="Cashier">Cashier</option>
@@ -162,19 +162,19 @@ const EmployeeManager = () => {
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
               {employees.map(emp => (
-                <div key={emp._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'white', border: '1px solid #e5e7eb', position: 'relative' }}>
+                <div key={emp._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
                     <button onClick={() => handleChangePassword(emp._id)} title="Change Password" style={{ background: 'none', border: 'none', color: 'var(--status-blue)', cursor: 'pointer' }}><Key size={16} /></button>
                     <button onClick={() => handleArchive(emp._id)} title="Archive Employee" style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}><UserX size={16} /></button>
                   </div>
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', color: 'var(--accent-primary)', paddingRight: '50px' }}>{emp.name}</h4>
                   
-                  <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem', color: '#4b5563' }}>
+                  <div style={{ fontSize: '0.9rem', marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
                     <strong>Email:</strong> {emp.email}
                   </div>
 
-                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#4b5563' }}>
-                    <strong>Role:</strong> <span style={{ padding: '2px 8px', borderRadius: '10px', backgroundColor: '#e5e7eb', fontSize: '0.8rem', fontWeight: 600 }}>{emp.role}</span>
+                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                    <strong>Role:</strong> <span style={{ padding: '2px 8px', borderRadius: '10px', backgroundColor: 'var(--border-color)', fontSize: '0.8rem', fontWeight: 600 }}>{emp.role}</span>
                   </div>
                   
                   <div style={{ fontSize: '0.8rem', color: 'var(--status-green)' }}>

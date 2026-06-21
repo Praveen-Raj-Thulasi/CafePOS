@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, Trash2, CheckCircle, Printer, Mail, Send } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
+import { useSocket } from '../contexts/SocketContext';
 import PaymentModal from './PaymentModal';
 import { generateReceiptPDF } from '../utils/pdfGenerator';
 
@@ -9,6 +10,7 @@ const OrderView = () => {
   const { tableId } = useParams();
   const navigate = useNavigate();
   const { addNotification } = useNotification();
+  const socket = useSocket();
   
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -27,7 +29,7 @@ const OrderView = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('userToken');
+        const token = sessionStorage.getItem('userToken');
         const headers = { 'Authorization': `Bearer ${token}` };
         
         const [catRes, prodRes, billRes] = await Promise.all([
@@ -57,6 +59,16 @@ const OrderView = () => {
   }, []);
 
   const filteredProducts = products.filter(p => p.category === activeCat || p.category?._id === activeCat);
+
+  // CFD Synchronization
+  useEffect(() => {
+    if (!socket) return;
+    if (isPaymentOpen && openBill) {
+      socket.emit('cfd_payment', openBill);
+    } else {
+      socket.emit('cfd_update', cart);
+    }
+  }, [cart, isPaymentOpen, openBill, socket]);
 
   const addToCart = (product) => {
     setCart(prev => {
@@ -89,7 +101,7 @@ const OrderView = () => {
   const submitOrder = async () => {
     if (cart.length === 0) return;
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       
       const orderPayload = {
         tableId,
@@ -141,6 +153,7 @@ const OrderView = () => {
       });
 
       if (response.ok) {
+        if (socket) socket.emit('cfd_complete', openBill);
         addNotification('Bill settled successfully!', 'success');
         setPaymentSuccessData(openBill);
         setCustomerEmail('');
@@ -210,8 +223,8 @@ const OrderView = () => {
                 padding: '0.75rem 1.5rem', 
                 border: 'none', 
                 cursor: 'pointer',
-                backgroundColor: activeCat === cat._id ? (cat.color || 'var(--accent-primary)') : 'white',
-                color: activeCat === cat._id ? 'white' : 'var(--text-primary)',
+                backgroundColor: activeCat === cat._id ? (cat.color || 'var(--accent-primary)') : 'var(--card-bg)',
+                color: activeCat === cat._id ? 'var(--card-bg)' : 'var(--text-primary)',
                 fontWeight: 600,
                 whiteSpace: 'nowrap'
               }}
@@ -238,7 +251,7 @@ const OrderView = () => {
 
       <div className="glass-card" style={{ width: '420px', margin: '1.5rem 1.5rem 1.5rem 0', display: 'flex', flexDirection: 'column' }}>
         {openBill && openBill.orders && openBill.orders.length > 0 && (
-          <div style={{ padding: '1.5rem', backgroundColor: '#eff6ff', borderBottom: '1px solid #bfdbfe', borderRadius: '20px 20px 0 0' }}>
+          <div style={{ padding: '1.5rem', backgroundColor: 'var(--highlight-blue)', borderBottom: '1px solid var(--border-blue)', borderRadius: '20px 20px 0 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ margin: 0, color: '#1e3a8a' }}>Open Tab</h3>
               <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8' }}>₹{openBill.total.toFixed(2)}</span>
@@ -247,14 +260,14 @@ const OrderView = () => {
             <button 
               className="pill-btn" 
               onClick={() => setIsPaymentOpen(true)}
-              style={{ width: '100%', marginTop: '1rem', backgroundColor: '#3b82f6', color: 'white' }}
+              style={{ width: '100%', marginTop: '1rem', backgroundColor: '#3b82f6', color: 'var(--card-bg)' }}
             >
               Settle Full Bill
             </button>
           </div>
         )}
 
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid #f3f4f6' }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
           <h3 style={{ margin: 0 }}>New Order</h3>
         </div>
 
@@ -270,9 +283,9 @@ const OrderView = () => {
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>₹{item.price.toFixed(2)}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <button onClick={() => updateQty(item._id, -1)} style={{ padding: '0.25rem', borderRadius: '5px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer' }}><Minus size={14} /></button>
+                    <button onClick={() => updateQty(item._id, -1)} style={{ padding: '0.25rem', borderRadius: '5px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}><Minus size={14} /></button>
                     <span style={{ fontWeight: 600, width: '20px', textAlign: 'center' }}>{item.qty}</span>
-                    <button onClick={() => updateQty(item._id, 1)} style={{ padding: '0.25rem', borderRadius: '5px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer' }}><Plus size={14} /></button>
+                    <button onClick={() => updateQty(item._id, 1)} style={{ padding: '0.25rem', borderRadius: '5px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}><Plus size={14} /></button>
                     <button onClick={() => removeItem(item._id)} style={{ padding: '0.25rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--status-red)', marginLeft: '0.5rem' }}><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -281,7 +294,7 @@ const OrderView = () => {
           )}
         </div>
 
-        <div style={{ padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '0 0 20px 20px' }}>
+        <div style={{ padding: '1.5rem', backgroundColor: 'var(--sub-bg)', borderRadius: '0 0 20px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
             <span>Subtotal</span>
             <span>₹{subtotal.toFixed(2)}</span>
@@ -321,7 +334,7 @@ const OrderView = () => {
             
             <button 
               onClick={() => generateReceiptPDF(paymentSuccessData)}
-              style={{ width: '100%', padding: '1rem', backgroundColor: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1rem', transition: 'all 0.2s' }}
+              style={{ width: '100%', padding: '1rem', backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)', border: 'none', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1rem', transition: 'all 0.2s' }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
@@ -329,7 +342,7 @@ const OrderView = () => {
             </button>
 
             {/* Email Receipt Section */}
-            <div style={{ width: '100%', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+            <div style={{ width: '100%', marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--sub-bg)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               {emailSent ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--status-green)', fontWeight: 500 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -350,13 +363,13 @@ const OrderView = () => {
                       placeholder="Customer Email" 
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 2.5rem', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none', fontSize: '0.95rem' }}
+                      style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 2.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', fontSize: '0.95rem' }}
                     />
                   </div>
                   <button 
                     onClick={handleSendEmail}
                     disabled={!customerEmail || isSendingEmail}
-                    style={{ padding: '0 1rem', backgroundColor: isSendingEmail ? '#9ca3af' : '#18181b', color: 'white', border: 'none', borderRadius: '8px', cursor: customerEmail ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                    style={{ padding: '0 1rem', backgroundColor: isSendingEmail ? 'var(--text-secondary)' : '#18181b', color: 'var(--card-bg)', border: 'none', borderRadius: '8px', cursor: customerEmail ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
                   >
                     {isSendingEmail ? 'Sending...' : <><Send size={16} /> Send</>}
                   </button>

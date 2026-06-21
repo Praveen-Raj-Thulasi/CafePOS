@@ -164,8 +164,8 @@ const CustomerMenu = () => {
 
   if (paymentPending) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f9fafb', padding: '2rem', textAlign: 'center' }}>
-        <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: '50%', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'var(--sub-bg)', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ padding: '2rem', backgroundColor: 'var(--card-bg)', borderRadius: '50%', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
           <div className="spinner" style={{ width: '60px', height: '60px', border: '5px solid #e5e7eb', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
         </div>
         <h2 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Waiting for Verification</h2>
@@ -177,7 +177,7 @@ const CustomerMenu = () => {
 
   if (paymentSuccess) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'var(--status-green)', color: 'white', padding: '2rem', textAlign: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'var(--status-green)', color: 'var(--card-bg)', padding: '2rem', textAlign: 'center' }}>
         <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</h1>
         <h2>Payment Successful!</h2>
         <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>Thank you for dining with us. You are all set to go!</p>
@@ -186,10 +186,10 @@ const CustomerMenu = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f9fafb', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--sub-bg)', fontFamily: "'Inter', sans-serif" }}>
       
       {/* Header */}
-      <header style={{ padding: '1rem', backgroundColor: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 10 }}>
+      <header style={{ padding: '1rem', backgroundColor: 'var(--card-bg)', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 10 }}>
         <h1 style={{ margin: 0, color: 'var(--accent-primary)', fontSize: '1.5rem', fontWeight: 800 }}>Odoo Cafe</h1>
       </header>
 
@@ -209,8 +209,8 @@ const CustomerMenu = () => {
                     padding: '0.5rem 1.25rem', 
                     borderRadius: '99px',
                     border: 'none',
-                    backgroundColor: activeCat === cat._id ? 'var(--accent-primary)' : 'white',
-                    color: activeCat === cat._id ? 'white' : 'var(--text-secondary)',
+                    backgroundColor: activeCat === cat._id ? 'var(--accent-primary)' : 'var(--card-bg)',
+                    color: activeCat === cat._id ? 'var(--card-bg)' : 'var(--text-secondary)',
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
@@ -224,22 +224,22 @@ const CustomerMenu = () => {
             {/* Products */}
             <div style={{ padding: '0 1rem 1rem 1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {filteredProducts.map(product => (
-                <div key={product._id} style={{ display: 'flex', backgroundColor: 'white', padding: '1rem', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', alignItems: 'center' }}>
+                <div key={product._id} style={{ display: 'flex', backgroundColor: 'var(--card-bg)', padding: '1rem', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{product.name}</h3>
                     <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1.2rem' }}>₹{product.price.toFixed(2)}</span>
                   </div>
                   
                   {cart.find(i => i._id === product._id) ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#f3f4f6', padding: '0.25rem', borderRadius: '99px' }}>
-                      <button onClick={() => updateQty(product._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Minus size={16} /></button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'var(--hover-bg)', padding: '0.25rem', borderRadius: '99px' }}>
+                      <button onClick={() => updateQty(product._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Minus size={16} /></button>
                       <span style={{ fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{cart.find(i => i._id === product._id).qty}</span>
-                      <button onClick={() => updateQty(product._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Plus size={16} /></button>
+                      <button onClick={() => updateQty(product._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}><Plus size={16} /></button>
                     </div>
                   ) : (
                     <button 
                       onClick={() => addToCart(product)}
-                      style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)' }}
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)' }}
                     >
                       <Plus size={20} />
                     </button>
@@ -260,20 +260,20 @@ const CustomerMenu = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {cart.map(item => (
-                  <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', padding: '1rem', borderRadius: '15px' }}>
+                  <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--card-bg)', padding: '1rem', borderRadius: '15px' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600 }}>{item.name}</div>
                       <div style={{ color: 'var(--text-secondary)' }}>₹{(item.price * item.qty).toFixed(2)}</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: '#f3f4f6', padding: '0.25rem', borderRadius: '99px' }}>
-                      <button onClick={() => updateQty(item._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'var(--hover-bg)', padding: '0.25rem', borderRadius: '99px' }}>
+                      <button onClick={() => updateQty(item._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
                       <span style={{ fontWeight: 600, minWidth: '16px', textAlign: 'center' }}>{item.qty}</span>
-                      <button onClick={() => updateQty(item._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
+                      <button onClick={() => updateQty(item._id, 1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={16} /></button>
                     </div>
                   </div>
                 ))}
 
-                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'white', borderRadius: '15px' }}>
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--card-bg)', borderRadius: '15px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Subtotal</span>
                     <span>₹{subtotal.toFixed(2)}</span>
@@ -290,7 +290,7 @@ const CustomerMenu = () => {
 
                 <button 
                   onClick={submitOrder}
-                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'white', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem' }}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem' }}
                 >
                   Send Order to Kitchen
                 </button>
@@ -308,7 +308,7 @@ const CustomerMenu = () => {
               <p style={{ color: 'var(--text-secondary)' }}>You have no open tab. Place an order to see your bill here!</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ backgroundColor: 'white', borderRadius: '15px', padding: '1.5rem' }}>
+                <div style={{ backgroundColor: 'var(--card-bg)', borderRadius: '15px', padding: '1.5rem' }}>
                   {openTab.orders.map((order, idx) => (
                     <div key={order._id} style={{ marginBottom: idx === openTab.orders.length - 1 ? 0 : '1.5rem', borderBottom: idx === openTab.orders.length - 1 ? 'none' : '1px dashed #e5e7eb', paddingBottom: idx === openTab.orders.length - 1 ? 0 : '1rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -329,7 +329,7 @@ const CustomerMenu = () => {
                   ))}
                 </div>
 
-                <div style={{ backgroundColor: '#eff6ff', borderRadius: '15px', padding: '1.5rem' }}>
+                <div style={{ backgroundColor: 'var(--highlight-blue)', borderRadius: '15px', padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', fontWeight: 800 }}>
                     <span>Total Due</span>
                     <span style={{ color: 'var(--accent-primary)' }}>₹{openTab.total.toFixed(2)}</span>
@@ -338,7 +338,7 @@ const CustomerMenu = () => {
 
                 <button 
                   onClick={() => setActiveView('payment')}
-                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: '#10b981', color: 'white', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: '#10b981', color: 'var(--card-bg)', fontSize: '1.1rem', fontWeight: 600, marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
                   <CreditCard /> Pay Online Now
                 </button>
@@ -355,7 +355,7 @@ const CustomerMenu = () => {
         {activeView === 'payment' && (
           <div style={{ padding: '1.5rem' }}>
             <h2 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>Checkout</h2>
-            <div style={{ backgroundColor: 'white', borderRadius: '15px', padding: '1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ backgroundColor: 'var(--card-bg)', borderRadius: '15px', padding: '1.5rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>
                 <span>Total Due</span>
                 <span style={{ color: 'var(--accent-primary)' }}>₹{openTab.total.toFixed(2)}</span>
@@ -363,7 +363,7 @@ const CustomerMenu = () => {
               
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'center', marginBottom: '2rem' }}>
                 <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Scan with GPay, PhonePe, or Paytm</h3>
-                <div style={{ padding: '1rem', backgroundColor: 'white', borderRadius: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                <div style={{ padding: '1rem', backgroundColor: 'var(--card-bg)', borderRadius: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                   <QRCodeSVG 
                     value={`upi://pay?pa=7010496249@nyes&pn=OdooCafe&am=${openTab.total.toFixed(2)}&cu=INR`} 
                     size={200} 
@@ -379,7 +379,7 @@ const CustomerMenu = () => {
                 <button 
                   type="submit"
                   disabled={isProcessing}
-                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--status-green)', color: 'white', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '100%', padding: '1.25rem', borderRadius: '15px', border: 'none', backgroundColor: 'var(--status-green)', color: 'var(--card-bg)', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {isProcessing ? 'Verifying Payment...' : 'I Have Paid'}
                 </button>
@@ -398,7 +398,7 @@ const CustomerMenu = () => {
       </main>
 
       {/* Fixed Bottom Navigation */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'white', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-around', padding: '0.75rem', zIndex: 20 }}>
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--card-bg)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-around', padding: '0.75rem', zIndex: 20 }}>
         <button 
           onClick={() => setActiveView('menu')}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: 'none', background: 'none', color: activeView === 'menu' ? 'var(--accent-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
@@ -418,7 +418,7 @@ const CustomerMenu = () => {
           </div>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: '0.25rem' }}>Cart</span>
           {cart.length > 0 && (
-            <span style={{ position: 'absolute', top: 0, right: '5px', backgroundColor: 'var(--status-red)', color: 'white', fontSize: '0.7rem', fontWeight: 700, width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ position: 'absolute', top: 0, right: '5px', backgroundColor: 'var(--status-red)', color: 'var(--card-bg)', fontSize: '0.7rem', fontWeight: 700, width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {cart.reduce((s, i) => s + i.qty, 0)}
             </span>
           )}

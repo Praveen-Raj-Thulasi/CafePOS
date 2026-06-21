@@ -9,16 +9,16 @@ const KDS = () => {
   const { addNotification } = useNotification();
   const [orders, setOrders] = useState([]);
   const navigate = useNavigate();
-  const currentRole = localStorage.getItem('userRole');
+  const currentRole = sessionStorage.getItem('userRole');
 
   const handleLogout = () => {
-    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('userRole');
     navigate('/login');
   };
 
   const fetchTickets = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/kds/tickets', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -57,7 +57,7 @@ const KDS = () => {
     else return;
 
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       await fetch(`http://localhost:5000/api/orders/${id}/status`, {
         method: 'PUT',
         headers: { 
@@ -79,7 +79,7 @@ const KDS = () => {
     e.stopPropagation();
     const nextStatus = currentStatus === 'Completed' ? 'Preparing' : 'Completed';
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       await fetch(`http://localhost:5000/api/kds/item/${itemId}/status`, {
         method: 'PUT',
         headers: { 

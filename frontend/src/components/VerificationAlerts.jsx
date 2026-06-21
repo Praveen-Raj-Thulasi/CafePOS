@@ -5,11 +5,11 @@ import { ShieldAlert, Check, X } from 'lucide-react';
 const VerificationAlerts = () => {
   const socket = useSocket();
   const [verifications, setVerifications] = useState([]);
-  const currentRole = localStorage.getItem('userRole');
+  const currentRole = sessionStorage.getItem('userRole');
 
   const fetchVerifications = async () => {
     try {
-      const token = localStorage.getItem('userToken');
+      const token = sessionStorage.getItem('userToken');
       const response = await fetch('http://localhost:5000/api/payments/pending', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -83,7 +83,7 @@ const VerificationAlerts = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <button 
               onClick={async () => {
-                const token = localStorage.getItem('userToken');
+                const token = sessionStorage.getItem('userToken');
                 await fetch('http://localhost:5000/api/payments/settle', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -91,13 +91,13 @@ const VerificationAlerts = () => {
                 });
                 fetchVerifications();
               }}
-              style={{ padding: '0.75rem', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ padding: '0.75rem', backgroundColor: '#16a34a', color: 'var(--card-bg)', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             >
               <Check size={18} /> Approve
             </button>
             <button 
               onClick={async () => {
-                const token = localStorage.getItem('userToken');
+                const token = sessionStorage.getItem('userToken');
                 await fetch('http://localhost:5000/api/payments/reject', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -105,7 +105,7 @@ const VerificationAlerts = () => {
                 });
                 fetchVerifications();
               }}
-              style={{ padding: '0.75rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ padding: '0.75rem', backgroundColor: '#ef4444', color: 'var(--card-bg)', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
             >
               <X size={18} /> Reject
             </button>

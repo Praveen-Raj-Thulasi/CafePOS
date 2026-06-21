@@ -13,9 +13,14 @@ const ThemeToggle = ({ isFloating = true }) => {
       return;
     }
 
-    const savedTheme = localStorage.getItem('theme');
+    let savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     
+    // Default to light theme for Customer Menu unless explicitly changed
+    if (location.pathname.startsWith('/menu/') && !savedTheme) {
+      savedTheme = 'light';
+    }
+
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       setIsDark(true);
       document.body.classList.add('dark');

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   table: { type: mongoose.Schema.Types.ObjectId, ref: 'Table', required: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' }, 
+  session: { type: mongoose.Schema.Types.ObjectId, ref: 'POSSession' },
   channel: { 
     type: String, 
     enum: ['QR', 'Cashier', 'Waitstaff'], 

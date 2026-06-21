@@ -6,10 +6,10 @@ import VerificationAlerts from './VerificationAlerts';
 const SharedLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentRole = localStorage.getItem('userRole');
+  const currentRole = sessionStorage.getItem('userRole');
 
   const handleLogout = () => {
-    localStorage.removeItem('userRole');
+    sessionStorage.removeItem('userRole');
     navigate('/login');
   };
 
@@ -65,7 +65,7 @@ const SharedLayout = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', borderRadius: '10px', border: 'none', cursor: 'pointer',
                   backgroundColor: isActive ? 'var(--accent-primary)' : 'transparent',
-                  color: isActive ? 'white' : 'var(--text-primary)',
+                  color: isActive ? 'var(--card-bg)' : 'var(--text-primary)',
                   fontWeight: isActive ? 600 : 500,
                   transition: 'all 0.2s'
                 }}
