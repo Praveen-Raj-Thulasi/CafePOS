@@ -47,7 +47,7 @@ const SharedLayout = () => {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--bg-color)' }}>
+    <div className="responsive-layout">
       {/* Sidebar */}
       <aside className="glass-card" style={{ width: '250px', margin: '1rem', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
@@ -55,7 +55,7 @@ const SharedLayout = () => {
           <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{currentRole} Workspace</span>
         </div>
         
-        <nav style={{ flex: 1, padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <nav style={{ flex: 1, padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
           {navLinks.map(link => {
             const isActive = location.pathname.startsWith(link.path);
             return (

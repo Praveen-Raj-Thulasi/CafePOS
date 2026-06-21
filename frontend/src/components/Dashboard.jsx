@@ -110,7 +110,7 @@ const Dashboard = () => {
       </div>
 
       {/* Analytics Charts Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+      <div className="responsive-charts-grid">
         
         {/* Sales Area Chart */}
         <div className="glass-card" style={{ padding: '2rem' }}>
@@ -167,7 +167,7 @@ const Dashboard = () => {
           </div>
             
           {/* Custom Legend */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '1.5rem', padding: '0 1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem', marginTop: '1.5rem', padding: '0 1rem' }}>
               {metrics.popularItems?.map((item, index) => (
                 <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: item.color }}></div>

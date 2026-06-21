@@ -80,17 +80,78 @@ body {
 .glass-card::before {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border-radius: inherit;
   background: radial-gradient(circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px), rgba(99, 102, 241, 0.18) 0%, rgba(236, 72, 153, 0.1) 40%, transparent 60%);
-  z-index: 0;
-  pointer-events: none;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .glass-card:hover::before {
   opacity: 1;
+}
+
+/* =========================================
+   Responsive Utilities
+   ========================================= */
+
+/* Main layout responsive wrapper */
+.responsive-layout {
+  display: flex;
+  height: 100vh;
+  background-color: var(--bg-color);
+}
+
+/* Responsive charts grid */
+.responsive-charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Flex wrap utilities */
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Scrollable table container to prevent zoom overflow */
+.table-responsive-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .responsive-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .responsive-layout > aside {
+    width: auto !important;
+    margin: 1rem !important;
+  }
+  
+  .responsive-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pill-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
 }
 
 .glass-card > * {

@@ -202,9 +202,9 @@ const OrderView = () => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--bg-color)' }}>
+    <div className="responsive-layout">
       
-      <div style={{ flex: '1', display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+      <div style={{ flex: '1', display: 'flex', flexDirection: 'column', padding: '1.5rem', overflowY: 'auto' }}>
         
         <header style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
           <button onClick={() => navigate('/floor')} className="glass-card" style={{ padding: '0.75rem', border: 'none', cursor: 'pointer' }}>
@@ -213,7 +213,7 @@ const OrderView = () => {
           <h2 style={{ margin: 0 }}>Add Items to Order</h2>
         </header>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+        <div className="flex-wrap" style={{ gap: '1rem', marginBottom: '2rem', paddingBottom: '0.5rem' }}>
           {categories.map(cat => (
             <button 
               key={cat._id} 
@@ -234,7 +234,7 @@ const OrderView = () => {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem', overflowY: 'auto', paddingRight: '0.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem', paddingRight: '0.5rem' }}>
           {filteredProducts.map(product => (
             <div 
               key={product._id} 
@@ -249,7 +249,7 @@ const OrderView = () => {
         </div>
       </div>
 
-      <div className="glass-card" style={{ width: '420px', margin: '1.5rem 1.5rem 1.5rem 0', display: 'flex', flexDirection: 'column' }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: '420px', margin: '1.5rem', display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 3rem)' }}>
         {openBill && openBill.orders && openBill.orders.length > 0 && (
           <div style={{ padding: '1.5rem', backgroundColor: 'var(--highlight-blue)', borderBottom: '1px solid var(--border-blue)', borderRadius: '20px 20px 0 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>

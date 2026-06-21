@@ -294,10 +294,10 @@ const Reports = () => {
       ) : (
         <>
           {/* Compact Summary Bar */}
-          <div className="glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', backgroundColor: 'var(--card-bg)', borderLeft: '4px solid var(--status-green)', marginBottom: '1.5rem' }}>
+          <div className="glass-card flex-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', backgroundColor: 'var(--card-bg)', borderLeft: '4px solid var(--status-green)', marginBottom: '1.5rem', gap: '1.5rem' }}>
             <div>
               <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Period Summary</h3>
-              <div style={{ display: 'flex', gap: '2rem' }}>
+              <div className="flex-wrap" style={{ gap: '2rem' }}>
                 <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Total Orders: <span style={{ color: 'var(--accent-primary)', fontSize: '1.1rem' }}>{summary.totalOrders}</span></span>
                 <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Average Order Value: <span style={{ color: 'var(--accent-primary)', fontSize: '1.1rem' }}>₹{summary.averageOrderValue.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></span>
               </div>
@@ -310,7 +310,7 @@ const Reports = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="responsive-charts-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
             {/* Top Products Table */}
             <div className="glass-card" style={{ padding: '1.5rem', backgroundColor: 'var(--card-bg)', overflowX: 'auto' }}>
               <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1.5rem 0', color: 'var(--text-primary)' }}>
