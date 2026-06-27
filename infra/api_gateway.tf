@@ -46,8 +46,20 @@ resource "aws_cloudwatch_log_group" "api_gw_logs" {
   retention_in_days = 14
 }
 
-# HTTP proxy integration linking API Gateway to our public ALB
-resource "aws_apigatewayv2_integration" "backend" {
+# HTTP proxy integration linking API Gateway to our public ALB for routes with proxy parameters
+resource "aws_apigatewayv2_integration" "backend_proxy" {
+  api_id           = aws_apigatewayv2_api.api.id
+  integration_type = "HTTP_PROXY"
+  integration_uri  = "http://${aws_lb.main.dns_name}/{proxy}"
+
+  integration_method     = "ANY"
+  payload_format_version = "1.0" # Required for simple proxying
+
+  connection_type = "INTERNET"
+}
+
+# HTTP proxy integration linking API Gateway to our public ALB for the root route (no proxy parameter)
+resource "aws_apigatewayv2_integration" "backend_root" {
   api_id           = aws_apigatewayv2_api.api.id
   integration_type = "HTTP_PROXY"
   integration_uri  = "http://${aws_lb.main.dns_name}"
@@ -62,12 +74,12 @@ resource "aws_apigatewayv2_integration" "backend" {
 resource "aws_apigatewayv2_route" "proxy" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.backend.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.backend_proxy.id}"
 }
 
-# Route for default root path "/" to the backend ALB proxy integration
+# Route for default root path "/" to the backend ALB root integration
 resource "aws_apigatewayv2_route" "root" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /"
-  target    = "integrations/${aws_apigatewayv2_integration.backend.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.backend_root.id}"
 }

@@ -395,6 +395,9 @@ const mongoose = {
       pgUri = pgUri.replace('localhost', 'postgres');
     }
 
+    // Strip sslmode parameter from the connection string to allow rejectUnauthorized config to take effect
+    pgUri = pgUri.replace(/(\?|&)sslmode=[^&]*/g, '');
+
     pool = new Pool({
       connectionString: pgUri,
       ssl: process.env.NODE_ENV === 'production' || pgUri.includes('amazonaws.com') ? { rejectUnauthorized: false } : false

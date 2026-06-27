@@ -32,6 +32,7 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY package*.json ./
 # Copy application source code
 COPY server.js ./
+COPY registerMock.js ./
 COPY config/ ./config/
 COPY controllers/ ./controllers/
 COPY middleware/ ./middleware/
