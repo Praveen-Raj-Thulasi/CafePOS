@@ -383,10 +383,16 @@ const mongoose = {
   },
 
   connect: async (uri) => {
+    const fs = require('fs');
+    const isDocker = fs.existsSync('/.dockerenv');
+
     let pgUri = uri;
-    // Map connection string if MongoDB string is provided
     if (uri.startsWith('mongodb')) {
-      pgUri = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/odoocafe?sslmode=disable';
+      pgUri = process.env.DATABASE_URL || (isDocker
+        ? 'postgresql://postgres:postgres@postgres:5432/odoocafe?sslmode=disable'
+        : 'postgresql://postgres:postgres@localhost:5432/odoocafe?sslmode=disable');
+    } else if (isDocker && pgUri.includes('localhost')) {
+      pgUri = pgUri.replace('localhost', 'postgres');
     }
 
     pool = new Pool({
