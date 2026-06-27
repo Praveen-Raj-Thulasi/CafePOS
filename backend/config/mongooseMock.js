@@ -63,11 +63,23 @@ class Document {
   async save() {
     const schema = this._modelClass.schema;
     if (schema && schema.preHooks && schema.preHooks['save']) {
+      const hookFn = schema.preHooks['save'];
       await new Promise((resolve, reject) => {
-        schema.preHooks['save'].call(this, (err) => {
+        let isDone = false;
+        const done = (err) => {
+          if (isDone) return;
+          isDone = true;
           if (err) reject(err);
           else resolve();
-        });
+        };
+        try {
+          const result = hookFn.call(this, done);
+          if (result && typeof result.then === 'function') {
+            result.then(() => done()).catch(reject);
+          }
+        } catch (err) {
+          reject(err);
+        }
       });
     }
 
