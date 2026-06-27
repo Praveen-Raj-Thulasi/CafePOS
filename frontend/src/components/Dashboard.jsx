@@ -1,6 +1,7 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../contexts/SocketContext';
-import { DollarSign, Activity, Users, Coffee, Plus, Trash2, ShieldAlert, Check, X } from 'lucide-react';
+import { DollarSign, Activity, Users, Coffee, Plus, Trash2, ShieldAlert, Check, X, Zap, Clock, ThumbsUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -14,7 +15,12 @@ const Dashboard = () => {
     revenueToday: 0,
     completedOrdersToday: 0,
     salesData: [],
-    popularItems: []
+    popularItems: [],
+    aiStats: {
+      currentLoad: 0,
+      suggestionsUsed: 0,
+      averageWaitReduced: 0
+    }
   });
 
 
@@ -22,7 +28,7 @@ const Dashboard = () => {
   const fetchAnalytics = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/analytics', {
+      const response = await fetch(API_URL + '/api/analytics', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -108,6 +114,34 @@ const Dashboard = () => {
           color="var(--status-red)" 
         />
       </div>
+
+      {/* AI & Kitchen Analytics */}
+      {metrics.aiStats && (
+        <div style={{ marginBottom: '3rem' }}>
+          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Zap size={20} color="var(--accent-primary)" /> Smart Kitchen Analytics
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #ef4444' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Current Kitchen Load</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{metrics.aiStats.currentLoad}%</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Active orders capacity</div>
+            </div>
+            
+            <div className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #8b5cf6' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>AI Suggestions Used</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{metrics.aiStats.suggestionsUsed}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Times customers picked faster alternatives</div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Average Wait Reduced</div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{metrics.aiStats.averageWaitReduced} mins</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Saved per alternative accepted</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Analytics Charts Section */}
       <div className="responsive-charts-grid">

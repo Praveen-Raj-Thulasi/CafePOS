@@ -10,8 +10,15 @@ const orderItemSchema = new mongoose.Schema({
     enum: ['ToCook', 'Preparing', 'Completed', 'NotRequired'], 
     default: 'NotRequired' 
   },
+  isAlternativeAccepted: { type: Boolean, default: false },
+  waitSaved: { type: Number, default: 0 },
   priorityScore: { type: Number, default: 0 } // For the Dynamic KDS Priority Matrix
 }, { timestamps: true });
+
+// Indexes to speed up queries
+orderItemSchema.index({ order: 1 });
+orderItemSchema.index({ isAlternativeAccepted: 1 });
+orderItemSchema.index({ kdsStatus: 1 });
 
 const OrderItem = mongoose.model('OrderItem', orderItemSchema);
 module.exports = OrderItem;

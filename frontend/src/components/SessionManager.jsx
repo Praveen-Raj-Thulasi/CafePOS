@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { PlayCircle, StopCircle, DollarSign, Clock, CheckCircle } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
@@ -16,7 +17,7 @@ const SessionManager = () => {
       const token = sessionStorage.getItem('userToken');
       
       // Fetch Active
-      const activeRes = await fetch('http://localhost:5000/api/sessions/active', {
+      const activeRes = await fetch(API_URL + '/api/sessions/active', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (activeRes.ok) {
@@ -27,7 +28,7 @@ const SessionManager = () => {
       }
 
       // Fetch Past
-      const pastRes = await fetch('http://localhost:5000/api/sessions/past', {
+      const pastRes = await fetch(API_URL + '/api/sessions/past', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (pastRes.ok) {
@@ -50,7 +51,7 @@ const SessionManager = () => {
     setError('');
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/sessions/open', {
+      const res = await fetch(API_URL + '/api/sessions/open', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ const SessionManager = () => {
     setError('');
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/sessions/close', {
+      const res = await fetch(API_URL + '/api/sessions/close', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

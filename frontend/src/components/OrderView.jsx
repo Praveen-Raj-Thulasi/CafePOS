@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, Trash2, CheckCircle, Printer, Mail, Send } from 'lucide-react';
@@ -19,6 +20,7 @@ const OrderView = () => {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [openBill, setOpenBill] = useState(null);
   const [paymentSuccessData, setPaymentSuccessData] = useState(null);
+  const [activeSessionIdForPayment, setActiveSessionIdForPayment] = useState(null);
   
   // Email Receipt State
   const [customerEmail, setCustomerEmail] = useState('');
@@ -33,9 +35,9 @@ const OrderView = () => {
         const headers = { 'Authorization': `Bearer ${token}` };
         
         const [catRes, prodRes, billRes] = await Promise.all([
-          fetch('http://localhost:5000/api/categories', { headers }),
-          fetch('http://localhost:5000/api/products', { headers }),
-          fetch(`http://localhost:5000/api/payments/bill/${tableId}`)
+          fetch(API_URL + '/api/categories', { headers }),
+          fetch(API_URL + '/api/products', { headers }),
+          fetch(`${API_URL}/api/payments/bill/${tableId}`)
         ]);
         
         if (catRes.ok && prodRes.ok) {
@@ -114,7 +116,7 @@ const OrderView = () => {
         }))
       };
 
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(API_URL + '/api/orders', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -128,7 +130,7 @@ const OrderView = () => {
         setCart([]); // Clear cart
         
         // Refresh the open bill so they can pay it immediately
-        const billRes = await fetch(`http://localhost:5000/api/payments/bill/${tableId}`);
+        const billRes = await fetch(`${API_URL}/api/payments/bill/${tableId}`);
         if (billRes.ok) {
           const billData = await billRes.json();
           setOpenBill(billData);
@@ -143,11 +145,12 @@ const OrderView = () => {
 
   const handleSettleBill = async (paymentDetails) => {
     try {
-      const response = await fetch('http://localhost:5000/api/payments/settle', {
+      const response = await fetch(API_URL + '/api/payments/settle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tableId,
+          qrSessionId: activeSessionIdForPayment === 'Staff' ? 'Staff' : activeSessionIdForPayment,
           paymentMethod: paymentDetails.method // e.g. 'Cashier' or 'Online' or 'Cash'
         })
       });
@@ -160,6 +163,7 @@ const OrderView = () => {
         setEmailSent(false);
         setPreviewUrl(null);
         setIsPaymentOpen(false);
+        setActiveSessionIdForPayment(null);
       } else {
         alert('Failed to settle bill.');
       }
@@ -174,7 +178,7 @@ const OrderView = () => {
     setPreviewUrl(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/payments/receipt/email', {
+      const response = await fetch(API_URL + '/api/payments/receipt/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -201,6 +205,21 @@ const OrderView = () => {
     }
   };
 
+  const groupedOrders = React.useMemo(() => {
+    if (!openBill || !openBill.orders) return {};
+    return openBill.orders.reduce((acc, order) => {
+      const key = order.qrSessionId || 'Staff';
+      if (!acc[key]) acc[key] = { orders: [], subtotal: 0, tax: 0, total: 0 };
+      acc[key].orders.push(order);
+      acc[key].subtotal += order.subtotal;
+      acc[key].tax += order.tax;
+      acc[key].total += order.total;
+      return acc;
+    }, {});
+  }, [openBill]);
+
+  const distinctGroupsCount = Object.keys(groupedOrders).length;
+
   return (
     <div className="responsive-layout">
       
@@ -223,7 +242,7 @@ const OrderView = () => {
                 padding: '0.75rem 1.5rem', 
                 border: 'none', 
                 cursor: 'pointer',
-                backgroundColor: activeCat === cat._id ? (cat.color || 'var(--accent-primary)') : 'var(--card-bg)',
+                backgroundColor: activeCat === cat._id ? 'var(--accent-primary)' : 'var(--card-bg)',
                 color: activeCat === cat._id ? 'var(--card-bg)' : 'var(--text-primary)',
                 fontWeight: 600,
                 whiteSpace: 'nowrap'
@@ -253,17 +272,89 @@ const OrderView = () => {
         {openBill && openBill.orders && openBill.orders.length > 0 && (
           <div style={{ padding: '1.5rem', backgroundColor: 'var(--highlight-blue)', borderBottom: '1px solid var(--border-blue)', borderRadius: '20px 20px 0 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, color: '#1e3a8a' }}>Open Tab</h3>
-              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1d4ed8' }}>₹{openBill.total.toFixed(2)}</span>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Open Tab</h3>
+              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-primary)' }}>₹{openBill.total.toFixed(2)}</span>
             </div>
-            <span style={{ fontSize: '0.85rem', color: '#3b82f6' }}>{openBill.orders.length} unbilled orders</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)' }}>{openBill.orders.length} unbilled orders</span>
+            
+            {/* Active Orders List */}
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {openBill.orders.map(order => {
+                const estTime = order.estimatedCompletionTime ? new Date(order.estimatedCompletionTime) : null;
+                const isCompleted = order.status === 'Ready' || order.status === 'Served' || order.status === 'Completed';
+                let statusMsg = null;
+                let statusColor = 'var(--text-secondary)';
+                
+                if (estTime) {
+                  if (isCompleted) {
+                    const actualTime = new Date(order.actualCompletionTime || Date.now());
+                    const isLate = actualTime > estTime;
+                    statusMsg = isLate ? `⚠️ Late by ${Math.floor((actualTime - estTime)/60000)}m` : '✅ On Time';
+                    statusColor = isLate ? '#ef4444' : '#10b981';
+                  } else {
+                    const now = new Date();
+                    const isDelayed = now > estTime;
+                    statusMsg = isDelayed ? `⚠️ Delayed (${Math.floor((now - estTime)/60000)}m over)` : `⏱️ Due in ${Math.max(0, Math.floor((estTime - now)/60000))}m`;
+                    statusColor = isDelayed ? '#f97316' : '#3b82f6';
+                  }
+                }
+
+                return (
+                  <div key={order._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--sub-bg)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Ord #{order.orderNumber}</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.status}</span>
+                    </div>
+                    {statusMsg && (
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusColor, backgroundColor: `${statusColor}15`, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                        {statusMsg}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
             <button 
               className="pill-btn" 
-              onClick={() => setIsPaymentOpen(true)}
-              style={{ width: '100%', marginTop: '1rem', backgroundColor: '#3b82f6', color: 'var(--card-bg)' }}
+              onClick={() => {
+                setActiveSessionIdForPayment(null);
+                setIsPaymentOpen(true);
+              }}
+              style={{ width: '100%', marginTop: '1rem', backgroundColor: 'var(--accent-primary)', color: 'var(--card-bg)' }}
             >
               Settle Full Bill
             </button>
+
+            {distinctGroupsCount > 1 && (
+              <div style={{ marginTop: '1.5rem', borderTop: '1px dashed var(--border-color)', paddingTop: '1.5rem' }}>
+                <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Split Bills</h4>
+                {Object.entries(groupedOrders).map(([key, group], idx) => (
+                  <div key={key} style={{ backgroundColor: 'var(--sub-bg)', padding: '1rem', borderRadius: '12px', marginBottom: idx === distinctGroupsCount - 1 ? 0 : '0.75rem', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                          {key === 'Staff' ? 'Staff Orders' : `Customer ${idx + 1}`}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--accent-primary)' }}>{group.orders.length} orders</span>
+                      </div>
+                      <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1.1rem' }}>₹{group.total.toFixed(2)}</span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setActiveSessionIdForPayment(key);
+                        setIsPaymentOpen(true);
+                      }}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--accent-primary)', backgroundColor: 'transparent', color: 'var(--accent-primary)', fontWeight: 600, cursor: 'pointer', marginTop: '0.5rem', transition: 'background-color 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--hover-bg)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Settle {key === 'Staff' ? 'Staff' : 'Customer'} Bill
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -315,11 +406,14 @@ const OrderView = () => {
       </div>
       <PaymentModal 
         isOpen={isPaymentOpen} 
-        onClose={() => setIsPaymentOpen(false)} 
-        total={openBill ? openBill.total : 0} 
-        prePromoTotal={openBill ? openBill.prePromoTotal : 0}
-        automatedDiscount={openBill ? openBill.automatedDiscount : 0}
-        appliedPromotion={openBill ? openBill.appliedPromotion : null}
+        onClose={() => {
+          setIsPaymentOpen(false);
+          setActiveSessionIdForPayment(null);
+        }} 
+        total={activeSessionIdForPayment ? groupedOrders[activeSessionIdForPayment]?.total : (openBill ? openBill.total : 0)} 
+        prePromoTotal={activeSessionIdForPayment ? groupedOrders[activeSessionIdForPayment]?.total : (openBill ? openBill.prePromoTotal : 0)}
+        automatedDiscount={activeSessionIdForPayment ? 0 : (openBill ? openBill.automatedDiscount : 0)}
+        appliedPromotion={activeSessionIdForPayment ? null : (openBill ? openBill.appliedPromotion : null)}
         onComplete={(details) => handleSettleBill({ ...details, method: 'Cashier' })} 
       />
 

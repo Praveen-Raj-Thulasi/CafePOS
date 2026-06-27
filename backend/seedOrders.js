@@ -1,3 +1,4 @@
+require('./registerMock');
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Order = require('./models/Order');

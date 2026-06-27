@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState } from 'react';
 import { X, CreditCard, Banknote, QrCode, CheckCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -16,7 +17,7 @@ const PaymentModal = ({ isOpen, onClose, total, prePromoTotal = 0, automatedDisc
     setCouponError('');
     if (!couponCodeInput.trim()) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/coupons/validate?code=${couponCodeInput}`);
+      const res = await fetch(`${API_URL}/api/coupons/validate?code=${couponCodeInput}`);
       const data = await res.json();
       if (!res.ok) {
         setCouponError(data.message || 'Invalid coupon');

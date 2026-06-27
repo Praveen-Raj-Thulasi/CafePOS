@@ -54,13 +54,13 @@ const updateTableStatus = async (req, res) => {
     if (table) {
       table.status = req.body.status || table.status;
       const updatedTable = await table.save();
-      
+
       // Emit socket event for real-time Inverted Table State Engine
       const io = req.app.get('io');
       if (io) {
         io.emit('table_state_changed', { tableId: table._id, status: table.status });
       }
-      
+
       res.json(updatedTable);
     } else {
       res.status(404).json({ message: 'Table not found' });

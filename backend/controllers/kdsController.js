@@ -13,17 +13,29 @@ const getTickets = async (req, res) => {
       return { ...order._doc, items };
     }));
 
-    // DYNAMIC PRIORITY MATRIX ALGORITHM
+    // DYNAMIC PRIORITY MATRIX ALGORITHM (Wait Time + Max Cooking Time)
     const sortedTickets = ordersWithItems.map(order => {
-      let score = 0;
-      if (order.channel === 'Waitstaff') score += 30;
-      if (order.channel === 'Cashier') score += 20;
-      if (order.channel === 'QR') score += 10;
-
       const minutesWaiting = Math.floor((Date.now() - new Date(order.createdAt)) / 60000);
-      score += minutesWaiting;
+      
+      let maxCookingTime = 0;
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          if (item.product && item.product.cookingTime > maxCookingTime) {
+            maxCookingTime = item.product.cookingTime;
+          }
+        });
+      }
 
-      return { ...order, calculatedPriority: score, minutesWaiting };
+      // Priority Score = Minutes Waiting + Estimated Max Cooking Time
+      // Orders with high cooking times need to start earlier.
+      // Orders waiting a long time need to be served quickly.
+      let score = minutesWaiting + maxCookingTime;
+      
+      // Minor bumps for channel
+      if (order.channel === 'Waitstaff') score += 5;
+      if (order.channel === 'Cashier') score += 3;
+
+      return { ...order, calculatedPriority: score, minutesWaiting, maxCookingTime };
     }).sort((a, b) => b.calculatedPriority - a.calculatedPriority);
 
     res.json(sortedTickets);

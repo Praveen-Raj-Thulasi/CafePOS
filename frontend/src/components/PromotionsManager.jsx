@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { Plus, Trash2, Tag, Zap } from 'lucide-react';
@@ -19,7 +20,7 @@ const PromotionsManager = ({ embedded = false }) => {
   const fetchPromotions = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/promotions', {
+      const res = await fetch(API_URL + '/api/promotions', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -34,7 +35,7 @@ const PromotionsManager = ({ embedded = false }) => {
   const fetchProducts = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/products', {
+      const res = await fetch(API_URL + '/api/products', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -66,7 +67,7 @@ const PromotionsManager = ({ embedded = false }) => {
     if (type === 'Product' && (!minQuantity || !targetProduct)) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/promotions', {
+      const res = await fetch(API_URL + '/api/promotions', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -98,7 +99,7 @@ const PromotionsManager = ({ embedded = false }) => {
 
   const toggleStatus = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/promotions/${id}`, {
+      const res = await fetch(`${API_URL}/api/promotions/${id}`, {
         method: 'PUT',
         headers: getHeaders()
       });
@@ -114,7 +115,7 @@ const PromotionsManager = ({ embedded = false }) => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this promotion?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/promotions/${id}`, {
+      const res = await fetch(`${API_URL}/api/promotions/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });

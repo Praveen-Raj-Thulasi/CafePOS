@@ -11,12 +11,13 @@ const nodemailer = require('nodemailer');
 const getTableBill = async (req, res) => {
   try {
     const tableId = req.params.tableId;
+    const qrSessionId = req.query.qrSessionId;
     
     // Find all unpaid orders for this table
-    const orders = await Order.find({ 
-      table: tableId, 
-      paymentStatus: 'Unpaid' 
-    });
+    let query = { table: tableId, paymentStatus: 'Unpaid' };
+    if (qrSessionId) query.qrSessionId = qrSessionId;
+    
+    const orders = await Order.find(query);
 
     if (!orders || orders.length === 0) {
       return res.status(200).json({ 
@@ -114,17 +115,23 @@ const getTableBill = async (req, res) => {
 // @access  Public (QR Online) or Private (Staff)
 const settleBill = async (req, res) => {
   try {
-    const { tableId, paymentMethod, appliedDiscount, couponCode } = req.body;
+    const { tableId, paymentMethod, appliedDiscount, couponCode, qrSessionId } = req.body;
 
     if (!tableId || !paymentMethod) {
       return res.status(400).json({ message: 'Table ID and Payment Method are required' });
     }
 
     // Find all unpaid or pending orders for this table
-    const orders = await Order.find({ 
-      table: tableId, 
-      paymentStatus: { $in: ['Unpaid', 'PendingVerification'] }
-    });
+    let query = { table: tableId, paymentStatus: { $in: ['Unpaid', 'PendingVerification'] } };
+    if (qrSessionId) {
+      if (qrSessionId === 'Staff') {
+        query.qrSessionId = { $exists: false };
+      } else {
+        query.qrSessionId = qrSessionId;
+      }
+    }
+    
+    const orders = await Order.find(query);
 
     if (!orders || orders.length === 0) {
       return res.status(400).json({ message: 'No unpaid orders found for this table' });
@@ -185,17 +192,20 @@ const settleBill = async (req, res) => {
       await order.save();
     }
 
-    // Update Table Status to Vacant
+    // Update Table Status to Vacant if no other unpaid orders remain
+    const io = req.app.get('io');
     const table = await Table.findById(tableId);
     if (table) {
-      table.status = 'Vacant';
-      await table.save();
+      const remainingUnpaid = await Order.countDocuments({ table: tableId, paymentStatus: { $in: ['Unpaid', 'PendingVerification'] } });
+      if (remainingUnpaid === 0) {
+        table.status = 'Vacant';
+        await table.save();
+        if (io) io.emit('table_state_changed', { tableId: table._id, status: 'Vacant' });
+      }
     }
 
     // Emit socket events
-    const io = req.app.get('io');
     if (io) {
-      io.emit('table_state_changed', { tableId: table._id, status: 'Vacant' });
       io.emit('payment_verified', { tableId: table._id });
       io.emit('analytics_updated');
       io.emit('kds_refresh_needed');
@@ -211,12 +221,12 @@ const settleBill = async (req, res) => {
 // @route   POST /api/payments/claim
 const claimPayment = async (req, res) => {
   try {
-    const { tableId } = req.body;
+    const { tableId, qrSessionId } = req.body;
     
-    const orders = await Order.find({ 
-      table: tableId, 
-      paymentStatus: 'Unpaid' 
-    });
+    let query = { table: tableId, paymentStatus: 'Unpaid' };
+    if (qrSessionId) query.qrSessionId = qrSessionId;
+
+    const orders = await Order.find(query);
 
     if (!orders || orders.length === 0) {
       return res.status(400).json({ message: 'No unpaid orders found' });

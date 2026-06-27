@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { Plus, Edit2, Trash2, Save, X, Utensils } from 'lucide-react';
@@ -13,13 +14,13 @@ const MenuManager = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [catName, setCatName] = useState('');
   const [catColor, setCatColor] = useState('#6366f1');
-  const [prodForm, setProdForm] = useState({ name: '', price: '', unit: 'per piece', tax: '', description: '', kdsAssigned: true });
+  const [prodForm, setProdForm] = useState({ name: '', price: '', unit: 'per piece', tax: '', description: '', cookingTime: '', kdsAssigned: true });
 
   const fetchMenu = async () => {
     try {
       const [catRes, prodRes] = await Promise.all([
-        fetch('http://localhost:5000/api/categories'),
-        fetch('http://localhost:5000/api/products')
+        fetch(API_URL + '/api/categories'),
+        fetch(API_URL + '/api/products')
       ]);
       
       if (catRes.ok && prodRes.ok) {
@@ -54,8 +55,8 @@ const MenuManager = () => {
     try {
       const method = editingCategory ? 'PUT' : 'POST';
       const url = editingCategory 
-        ? `http://localhost:5000/api/categories/${editingCategory._id}` 
-        : 'http://localhost:5000/api/categories';
+        ? `${API_URL}/api/categories/${editingCategory._id}` 
+        : API_URL + '/api/categories';
       
       const res = await fetch(url, {
         method,
@@ -79,7 +80,7 @@ const MenuManager = () => {
   const handleDeleteCategory = async (id) => {
     if (!window.confirm("Are you sure? This will not delete products automatically, they will be orphaned.")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
+      const res = await fetch(`${API_URL}/api/categories/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });
@@ -111,8 +112,8 @@ const MenuManager = () => {
     try {
       const method = editingProduct ? 'PUT' : 'POST';
       const url = editingProduct 
-        ? `http://localhost:5000/api/products/${editingProduct._id}` 
-        : 'http://localhost:5000/api/products';
+        ? `${API_URL}/api/products/${editingProduct._id}` 
+        : API_URL + '/api/products';
       
       const res = await fetch(url, {
         method,
@@ -123,6 +124,7 @@ const MenuManager = () => {
           unit: prodForm.unit,
           tax: parseFloat(prodForm.tax) || 0,
           description: prodForm.description,
+          cookingTime: parseInt(prodForm.cookingTime) || 0,
           category: activeCatId,
           kdsAssigned: prodForm.kdsAssigned
         })
@@ -131,7 +133,7 @@ const MenuManager = () => {
       if (res.ok) {
         addNotification(`Product ${editingProduct ? 'updated' : 'created'}!`, 'success');
         setEditingProduct(null);
-        setProdForm({ name: '', price: '', unit: 'per piece', tax: '', description: '', kdsAssigned: true });
+        setProdForm({ name: '', price: '', unit: 'per piece', tax: '', description: '', cookingTime: '', kdsAssigned: true });
         fetchMenu();
       } else {
         alert('Failed to save product');
@@ -144,7 +146,7 @@ const MenuManager = () => {
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });
@@ -165,13 +167,14 @@ const MenuManager = () => {
       unit: prod.unit || 'per piece',
       tax: prod.tax || '',
       description: prod.description || '',
+      cookingTime: prod.cookingTime || '',
       kdsAssigned: prod.kdsAssigned !== undefined ? prod.kdsAssigned : true
     });
   };
 
   const cancelProductEdit = () => {
     setEditingProduct(null);
-    setProdForm({ name: '', price: '', unit: 'per piece', tax: '', description: '', kdsAssigned: true });
+    setProdForm({ name: '', price: '', unit: 'per piece', tax: '', description: '', cookingTime: '', kdsAssigned: true });
   };
 
   const currentCategoryProducts = products.filter(p => p.category === activeCatId || p.category?._id === activeCatId);
@@ -279,9 +282,14 @@ const MenuManager = () => {
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
               />
               <input 
+                type="number" placeholder="Cooking Time (mins)" 
+                value={prodForm.cookingTime} onChange={e => setProdForm({...prodForm, cookingTime: e.target.value})}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+              />
+              <input 
                 type="text" placeholder="Description" 
                 value={prodForm.description} onChange={e => setProdForm({...prodForm, description: e.target.value})}
-                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', gridColumn: '1 / -1' }}
               />
             </div>
             
@@ -313,7 +321,10 @@ const MenuManager = () => {
                     <div style={{ color: 'var(--accent-primary)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>
                       ₹{product.price.toFixed(2)} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ {product.unit || 'per piece'}</span>
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Tax: {product.tax || 0}%</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                      <span>Tax: {product.tax || 0}%</span>
+                      <span>⏱️ {product.cookingTime || 0} mins</span>
+                    </div>
                     
                     <div style={{ marginTop: 'auto', fontSize: '0.8rem', color: product.kdsAssigned ? 'var(--status-orange)' : 'var(--text-secondary)' }}>
                       {product.kdsAssigned ? '👨‍🍳 Sent to Kitchen' : '✅ Ready to Serve'}

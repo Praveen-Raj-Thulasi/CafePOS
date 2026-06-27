@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { Plus, UserX, Key, Users } from 'lucide-react';
@@ -15,7 +16,7 @@ const EmployeeManager = () => {
   const fetchEmployees = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(API_URL + '/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -42,7 +43,7 @@ const EmployeeManager = () => {
   const handleCreateEmployee = async () => {
     if (!name.trim() || !email.trim() || !password) return;
     try {
-      const res = await fetch('http://localhost:5000/api/users', {
+      const res = await fetch(API_URL + '/api/users', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ name, email, password, role })
@@ -64,16 +65,18 @@ const EmployeeManager = () => {
     }
   };
 
-  const handleArchive = async (id) => {
-    if (!window.confirm("Archive this employee? They will no longer be able to log in.")) return;
+  const handleDelete = async (id) => {
+    if (!window.confirm("Permanently delete this employee?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${id}/archive`, {
-        method: 'PUT',
+      const res = await fetch(`${API_URL}/api/users/${id}`, {
+        method: 'DELETE',
         headers: getHeaders()
       });
       if (res.ok) {
-        addNotification('Employee archived!', 'success');
+        addNotification('Employee deleted!', 'success');
         fetchEmployees();
+      } else {
+        alert('Failed to delete employee');
       }
     } catch (err) {
       console.error(err);
@@ -85,7 +88,7 @@ const EmployeeManager = () => {
     if (!newPassword) return;
     
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${id}/password`, {
+      const res = await fetch(`${API_URL}/api/users/${id}/password`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify({ password: newPassword })
@@ -165,7 +168,9 @@ const EmployeeManager = () => {
                 <div key={emp._id} style={{ padding: '1.5rem', borderRadius: '15px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
                     <button onClick={() => handleChangePassword(emp._id)} title="Change Password" style={{ background: 'none', border: 'none', color: 'var(--status-blue)', cursor: 'pointer' }}><Key size={16} /></button>
-                    <button onClick={() => handleArchive(emp._id)} title="Archive Employee" style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}><UserX size={16} /></button>
+                    {emp.role !== 'Admin' && (
+                      <button onClick={() => handleDelete(emp._id)} title="Remove Employee" style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer' }}><UserX size={16} /></button>
+                    )}
                   </div>
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', color: 'var(--accent-primary)', paddingRight: '50px' }}>{emp.name}</h4>
                   

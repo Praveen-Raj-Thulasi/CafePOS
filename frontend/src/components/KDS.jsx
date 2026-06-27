@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../contexts/SocketContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -8,8 +9,15 @@ const KDS = () => {
   const socket = useSocket();
   const { addNotification } = useNotification();
   const [orders, setOrders] = useState([]);
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const navigate = useNavigate();
   const currentRole = sessionStorage.getItem('userRole');
+
+  // Update current time every minute to refresh wait times dynamically
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem('userRole');
@@ -19,7 +27,7 @@ const KDS = () => {
   const fetchTickets = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/kds/tickets', {
+      const response = await fetch(API_URL + '/api/kds/tickets', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -58,7 +66,7 @@ const KDS = () => {
 
     try {
       const token = sessionStorage.getItem('userToken');
-      await fetch(`http://localhost:5000/api/orders/${id}/status`, {
+      await fetch(`${API_URL}/api/orders/${id}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -80,7 +88,7 @@ const KDS = () => {
     const nextStatus = currentStatus === 'Completed' ? 'Preparing' : 'Completed';
     try {
       const token = sessionStorage.getItem('userToken');
-      await fetch(`http://localhost:5000/api/kds/item/${itemId}/status`, {
+      await fetch(`${API_URL}/api/kds/item/${itemId}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -94,47 +102,95 @@ const KDS = () => {
     }
   };
 
-  const Column = ({ title, status, color }) => (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem', backgroundColor: 'var(--column-bg)', borderRadius: '15px' }}>
-      <h2 style={{ padding: '1rem', borderBottom: `3px solid ${color}`, marginBottom: '1rem', color: 'var(--text-primary)' }}>{title}</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1 }}>
-        {orders.filter(o => o.status === status).map(order => (
-          <div key={order._id} onClick={() => advanceOrder(order._id, status)} className="glass-card" style={{ padding: '1.5rem', cursor: 'pointer', borderLeft: `6px solid ${color}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>{order.orderNumber}</span>
-              <span style={{ backgroundColor: 'var(--bg-color)', padding: '0.2rem 0.5rem', borderRadius: '5px', fontSize: '0.9rem', fontWeight: 600 }}>Tbl {order.table?.tableNumber || 'QR'}</span>
-            </div>
+  const getPriorityColor = (minutes) => {
+    if (minutes >= 8) return '#ef4444'; // Red
+    if (minutes >= 5) return '#f97316'; // Orange
+    if (minutes >= 3) return '#eab308'; // Yellow
+    return '#22c55e'; // Green
+  };
+
+  const getPriorityEmoji = (minutes) => {
+    if (minutes >= 8) return '🔴';
+    if (minutes >= 5) return '🟠';
+    if (minutes >= 3) return '🟡';
+    return '🟢';
+  };
+
+  // Recalculate minutes waiting based on order createdAt and currentTime
+  const processedOrders = [...orders]
+    .map(order => {
+      const waitMs = currentTime - new Date(order.createdAt).getTime();
+      const minutesWaiting = Math.floor(waitMs / 60000);
+      return { ...order, calculatedWaitTime: Math.max(0, minutesWaiting) };
+    })
+    .sort((a, b) => b.calculatedWaitTime - a.calculatedWaitTime)
+    .map((order, index) => ({
+      ...order,
+      priority: index + 1
+    }));
+
+  const Column = ({ title, status, columnColor }) => {
+    const columnOrders = processedOrders.filter(o => o.status === status);
+    
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem', backgroundColor: 'var(--column-bg)', borderRadius: '15px' }}>
+        <h2 style={{ padding: '1rem', borderBottom: `3px solid ${columnColor}`, marginBottom: '1rem', color: 'var(--text-primary)' }}>{title}</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', flex: 1 }}>
+          {columnOrders.map(order => {
+            const color = getPriorityColor(order.calculatedWaitTime);
+            const emoji = getPriorityEmoji(order.calculatedWaitTime);
             
-            <div style={{ marginBottom: '1rem' }}>
-              <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-primary)', fontSize: '1.2rem', fontWeight: 500 }}>
-                {order.items && order.items.map(item => (
-                  <li 
-                    key={item._id}
-                    onClick={(e) => toggleItemStatus(e, item._id, item.kdsStatus)}
-                    style={{ 
-                      textDecoration: item.kdsStatus === 'Completed' ? 'line-through' : 'none',
-                      color: item.kdsStatus === 'Completed' ? 'var(--text-secondary)' : 'inherit',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {item.quantity}x {item.product?.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              <span style={{ padding: '0.2rem 0.5rem', borderRadius: '5px', backgroundColor: 'var(--bg-color)' }}>{order.channel}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: order.minutesWaiting > 10 ? 'var(--status-red)' : 'inherit' }}>
-                <Clock size={16} /> {order.minutesWaiting} min
-              </span>
-            </div>
-          </div>
-        ))}
+            return (
+              <div key={order._id} onClick={() => advanceOrder(order._id, status)} className="glass-card" style={{ padding: '1.5rem', cursor: 'pointer', borderLeft: `6px solid ${color}` }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: color, textTransform: 'uppercase' }}>
+                      {emoji} PRIORITY #{order.priority}
+                    </span>
+                    <span style={{ backgroundColor: 'var(--bg-color)', padding: '0.2rem 0.5rem', borderRadius: '5px', fontSize: '0.9rem', fontWeight: 600 }}>Tbl {order.table?.tableNumber || 'QR'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: '1.4rem' }}>{order.orderNumber}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '1.2rem', fontWeight: 700, color: color }}>
+                      <Clock size={18} /> {order.calculatedWaitTime} mins
+                    </span>
+                  </div>
+                </div>
+                
+                <div style={{ marginBottom: '1rem' }}>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-primary)', fontSize: '1.2rem', fontWeight: 500 }}>
+                    {order.items && order.items.map(item => (
+                      <li 
+                        key={item._id}
+                        onClick={(e) => toggleItemStatus(e, item._id, item.kdsStatus)}
+                        style={{ 
+                          textDecoration: item.kdsStatus === 'Completed' ? 'line-through' : 'none',
+                          color: item.kdsStatus === 'Completed' ? 'var(--text-secondary)' : 'inherit',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {item.quantity}x {item.product?.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ padding: '0.2rem 0.5rem', borderRadius: '5px', backgroundColor: 'var(--bg-color)' }}>{order.channel}</span>
+                  {order.maxCookingTime > 0 && (
+                    <span style={{ padding: '0.2rem 0.5rem', borderRadius: '5px', backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      ⏱️ Est. {order.maxCookingTime} mins
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-color)' }}>
@@ -151,8 +207,8 @@ const KDS = () => {
       </header>
       
       <div style={{ display: 'flex', flex: 1, gap: '1rem', padding: '0 1rem 1rem 1rem', overflow: 'hidden' }}>
-        <Column title="Pending (Tap to Prepare)" status="Pending" color="var(--status-red)" />
-        <Column title="Preparing (Tap to Ready)" status="Preparing" color="var(--status-orange)" />
+        <Column title="Pending (Tap to Prepare)" status="Pending" columnColor="var(--status-red)" />
+        <Column title="Preparing (Tap to Ready)" status="Preparing" columnColor="var(--status-orange)" />
       </div>
     </div>
   );

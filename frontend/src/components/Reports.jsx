@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { Download, Calendar, Filter, BarChart3, TrendingUp, Package, Tag, FileText } from 'lucide-react';
 import { 
@@ -40,7 +41,7 @@ const Reports = () => {
     const fetchMetadata = async () => {
       try {
         const token = sessionStorage.getItem('userToken');
-        const res = await fetch('http://localhost:5000/api/products', {
+        const res = await fetch(API_URL + '/api/products', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -60,7 +61,7 @@ const Reports = () => {
     
     try {
       const token = sessionStorage.getItem('userToken');
-      let url = `http://localhost:5000/api/analytics/reports?type=${reportType}&channel=${channelFilter}&product=${productFilter}`;
+      let url = `${API_URL}/api/analytics/reports?type=${reportType}&channel=${channelFilter}&product=${productFilter}`;
       
       if (reportType === 'custom') {
         if (!startDate || !endDate) {

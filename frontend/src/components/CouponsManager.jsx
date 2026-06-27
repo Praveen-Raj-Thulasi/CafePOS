@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import { Plus, Edit2, Trash2, Save, X, Tag } from 'lucide-react';
@@ -14,7 +15,7 @@ const CouponsManager = ({ embedded = false }) => {
   const fetchCoupons = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/coupons', {
+      const res = await fetch(API_URL + '/api/coupons', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -41,7 +42,7 @@ const CouponsManager = ({ embedded = false }) => {
   const handleSaveCoupon = async () => {
     if (!code.trim() || !discountValue) return;
     try {
-      const res = await fetch('http://localhost:5000/api/coupons', {
+      const res = await fetch(API_URL + '/api/coupons', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -68,7 +69,7 @@ const CouponsManager = ({ embedded = false }) => {
 
   const toggleStatus = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/coupons/${id}`, {
+      const res = await fetch(`${API_URL}/api/coupons/${id}`, {
         method: 'PUT',
         headers: getHeaders()
       });
@@ -84,7 +85,7 @@ const CouponsManager = ({ embedded = false }) => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this coupon?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/coupons/${id}`, {
+      const res = await fetch(`${API_URL}/api/coupons/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
       });

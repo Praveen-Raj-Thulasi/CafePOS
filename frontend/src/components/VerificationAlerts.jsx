@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../contexts/SocketContext';
 import { ShieldAlert, Check, X } from 'lucide-react';
@@ -10,7 +11,7 @@ const VerificationAlerts = () => {
   const fetchVerifications = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/payments/pending', {
+      const response = await fetch(API_URL + '/api/payments/pending', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -84,7 +85,7 @@ const VerificationAlerts = () => {
             <button 
               onClick={async () => {
                 const token = sessionStorage.getItem('userToken');
-                await fetch('http://localhost:5000/api/payments/settle', {
+                await fetch(API_URL + '/api/payments/settle', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                   body: JSON.stringify({ tableId: v.tableId, paymentMethod: 'Online' })
@@ -98,7 +99,7 @@ const VerificationAlerts = () => {
             <button 
               onClick={async () => {
                 const token = sessionStorage.getItem('userToken');
-                await fetch('http://localhost:5000/api/payments/reject', {
+                await fetch(API_URL + '/api/payments/reject', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                   body: JSON.stringify({ tableId: v.tableId })

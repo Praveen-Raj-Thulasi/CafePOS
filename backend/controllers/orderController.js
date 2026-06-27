@@ -9,12 +9,29 @@ const generateOrderNumber = () => {
 };
 
 const createOrder = async (req, res) => {
-  const { tableId, items, channel, customerId, actorId } = req.body;
+  const { tableId, items, channel, customerId, actorId, qrSessionId } = req.body;
 
   try {
+    if (channel === 'QR' && qrSessionId) {
+      const table = await Table.findById(tableId);
+      if (table) {
+        const activeIds = await Order.distinct('qrSessionId', {
+          table: tableId,
+          paymentStatus: { $in: ['Unpaid', 'PendingVerification'] }
+        });
+        
+        // Filter out null/undefined just in case
+        const validActiveIds = activeIds.filter(id => id);
+        
+        if (!validActiveIds.includes(qrSessionId) && validActiveIds.length >= table.seats) {
+          return res.status(403).json({ message: 'Table capacity reached' });
+        }
+      }
+    }
+
     let subtotal = 0;
     let tax = 0;
-    
+
     items.forEach(item => {
       const lineTotal = item.unitPrice * item.quantity;
       subtotal += lineTotal;
@@ -23,26 +40,56 @@ const createOrder = async (req, res) => {
 
     const total = subtotal + tax;
 
+    // Calculate Estimated Wait Time
+    let maxItemCookingTime = 0;
+    
+    // We need to fetch product details to get cookingTime
+    const Product = require('../models/Product');
+    for (let i = 0; i < items.length; i++) {
+      const prodId = items[i].product || items[i]._id;
+      const prod = await Product.findById(prodId);
+      if (prod && prod.cookingTime > maxItemCookingTime) {
+        maxItemCookingTime = prod.cookingTime;
+      }
+    }
+
+    // Get active kitchen load
+    const activeOrdersCount = await Order.countDocuments({ status: { $in: ['Pending', 'Preparing'] } });
+    
+    // Estimate: Max cooking time of current items + (2 mins per active order in kitchen)
+    const estimatedWaitTime = maxItemCookingTime + (activeOrdersCount * 2);
+    const estimatedCompletionTime = new Date(Date.now() + (estimatedWaitTime * 60000));
+
     const order = await Order.create({
       table: tableId,
       customer: customerId,
+      qrSessionId: qrSessionId,
       channel: channel || 'Cashier',
       subtotal,
       tax,
       total,
+      estimatedWaitTime,
+      estimatedCompletionTime,
       status: 'Pending',
       orderNumber: generateOrderNumber()
     });
 
-    const orderItemsToInsert = items.map(item => ({
-      order: order._id,
-      product: item.product || item._id, // Handle different frontend mappings
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      kdsStatus: item.kdsAssigned ? 'ToCook' : 'NotRequired'
-    }));
+    const orderItems = await Promise.all(items.map(async item => {
+      // Find product to check if it needs KDS
+      const Product = require('../models/Product');
+      const prod = await Product.findById(item.product || item._id);
+      const requiresKDS = prod && prod.kdsAssigned;
 
-    await OrderItem.insertMany(orderItemsToInsert);
+      return await OrderItem.create({
+        order: order._id,
+        product: item.product || item._id,
+        quantity: item.qty || 1,
+        unitPrice: item.price || 0,
+        kdsStatus: requiresKDS ? 'ToCook' : 'NotRequired',
+        isAlternativeAccepted: item.isAlternativeAccepted || false,
+        waitSaved: item.waitSaved || 0
+      });
+    }));
 
     // Update Table Status to Active (Green)
     const table = await Table.findById(tableId);
@@ -60,7 +107,6 @@ const createOrder = async (req, res) => {
       io.emit('analytics_updated');
     }
 
-    res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -82,6 +128,13 @@ const updateOrderStatus = async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.status = status;
+    
+    if (status === 'Ready' || status === 'Served') {
+      if (!order.actualCompletionTime) {
+        order.actualCompletionTime = new Date();
+      }
+    }
+
     await order.save();
 
     const io = req.app.get('io');

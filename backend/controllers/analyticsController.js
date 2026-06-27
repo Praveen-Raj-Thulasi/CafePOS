@@ -70,13 +70,28 @@ const getAnalytics = async (req, res) => {
       .slice(0, 4)
       .map((item, index) => ({ ...item, color: CHART_COLORS[index] }));
 
+    // 3. AI & Kitchen Analytics
+    const aiStats = {
+      currentLoad: Math.min(100, Math.round((activeOrders / 30) * 100)), // Assuming 30 is 100% capacity
+      suggestionsUsed: 0,
+      averageWaitReduced: 0
+    };
+
+    const aiItems = await OrderItem.find({ isAlternativeAccepted: true });
+    if (aiItems.length > 0) {
+      aiStats.suggestionsUsed = aiItems.length;
+      const totalWaitSaved = aiItems.reduce((sum, item) => sum + (item.waitSaved || 0), 0);
+      aiStats.averageWaitReduced = Math.round(totalWaitSaved / aiItems.length);
+    }
+
     res.json({
       totalTables,
       activeOrders,
       completedOrdersToday,
       revenueToday,
       salesData,
-      popularItems
+      popularItems,
+      aiStats
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

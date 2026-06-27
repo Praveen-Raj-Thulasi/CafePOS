@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
@@ -15,7 +16,7 @@ const FloorPlan = () => {
   const fetchFloors = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/floors', {
+      const response = await fetch(API_URL + '/api/floors', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -30,7 +31,7 @@ const FloorPlan = () => {
   const fetchOrders = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(API_URL + '/api/orders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -68,11 +69,11 @@ const FloorPlan = () => {
     e.stopPropagation();
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: 'Completed' })
       });
@@ -90,7 +91,7 @@ const FloorPlan = () => {
     if (!newFloorName.trim()) return;
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/floors', {
+      const res = await fetch(API_URL + '/api/floors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ name: newFloorName })
@@ -108,7 +109,7 @@ const FloorPlan = () => {
     if (!window.confirm("Delete this floor and ALL its tables?")) return;
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch(`http://localhost:5000/api/floors/${id}`, {
+      const res = await fetch(`${API_URL}/api/floors/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -123,7 +124,7 @@ const FloorPlan = () => {
     if (!newTable.tableNumber.trim()) return;
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch('http://localhost:5000/api/tables', {
+      const res = await fetch(API_URL + '/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ ...newTable, floor: floorId })
@@ -142,7 +143,7 @@ const FloorPlan = () => {
     if (!window.confirm("Delete this table?")) return;
     try {
       const token = sessionStorage.getItem('userToken');
-      const res = await fetch(`http://localhost:5000/api/tables/${id}`, {
+      const res = await fetch(`${API_URL}/api/tables/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -162,15 +163,15 @@ const FloorPlan = () => {
       </header>
 
       <main style={{ flex: 1, padding: '1rem 2rem', overflowY: 'auto' }}>
-        
+
         {/* Floor Management Top Bar */}
         {currentRole === 'Admin' && (
           <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
             <h2 style={{ margin: '0 0 1rem 0' }}>Floor & Table Management</h2>
             <form onSubmit={handleCreateFloor} style={{ display: 'flex', gap: '1rem' }}>
-              <input 
-                type="text" 
-                placeholder="New Floor Name (e.g. Ground Floor)" 
+              <input
+                type="text"
+                placeholder="New Floor Name (e.g. Ground Floor)"
                 value={newFloorName}
                 onChange={e => setNewFloorName(e.target.value)}
                 style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', flex: 1, maxWidth: '400px' }}
@@ -193,12 +194,12 @@ const FloorPlan = () => {
                 </button>
               )}
             </div>
-            
+
             {/* Create Table Form */}
             {currentRole === 'Admin' && (
               <form onSubmit={(e) => handleCreateTable(floor._id, e)} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <input type="text" placeholder="Table #" value={newTable.tableNumber} onChange={e => setNewTable({...newTable, tableNumber: e.target.value})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '120px' }} required />
-                <input type="number" placeholder="Seats" value={newTable.seats} onChange={e => setNewTable({...newTable, seats: parseInt(e.target.value)})} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100px' }} required min="1" />
+                <input type="text" placeholder="Table #" value={newTable.tableNumber} onChange={e => setNewTable({ ...newTable, tableNumber: e.target.value })} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '120px' }} required />
+                <input type="number" placeholder="Seats" value={newTable.seats} onChange={e => setNewTable({ ...newTable, seats: parseInt(e.target.value) })} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100px' }} required min="1" />
                 <button type="submit" className="pill-btn" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--text-primary)' }}>
                   <Plus size={18} /> Add Table
                 </button>
@@ -212,13 +213,13 @@ const FloorPlan = () => {
                 const tableServedOrder = servedOrders.find(o => o.table?._id === table._id);
 
                 return (
-                  <div 
+                  <div
                     key={table._id}
                     className="glass-card"
                     onClick={() => navigate(`/order/${table._id}`)}
-                    style={{ 
-                      padding: '2rem 1rem', 
-                      display: 'flex', 
+                    style={{
+                      padding: '2rem 1rem',
+                      display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -230,18 +231,18 @@ const FloorPlan = () => {
                   >
                     {currentRole === 'Admin' && (
                       <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '0.5rem' }}>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(`/qr/${table._id}?number=${table.tableNumber}`, '_blank');
-                          }} 
+                          }}
                           style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }}
                           title="Print QR Code"
                         >
                           <QrCode size={16} />
                         </button>
-                        <button 
-                          onClick={(e) => handleDeleteTable(e, table._id)} 
+                        <button
+                          onClick={(e) => handleDeleteTable(e, table._id)}
                           style={{ background: 'none', border: 'none', color: 'var(--status-red)', cursor: 'pointer', padding: 0 }}
                           title="Delete Table"
                         >
@@ -252,12 +253,17 @@ const FloorPlan = () => {
 
                     <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{table.tableNumber}</span>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{table.seats} Seats</span>
-                    
-                    <span style={{ 
-                      marginTop: '1rem', 
-                      padding: '0.25rem 0.75rem', 
-                      borderRadius: '99px', 
-                      fontSize: '0.75rem', 
+                    {table.activeCustomers > 0 && (
+                      <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', marginTop: '0.25rem', fontWeight: 600 }}>
+                        {table.activeCustomers} Active Users
+                      </span>
+                    )}
+
+                    <span style={{
+                      marginTop: '1rem',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '99px',
+                      fontSize: '0.75rem',
                       fontWeight: 600,
                       backgroundColor: isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                       color: isActive ? 'var(--status-green)' : 'var(--status-red)'

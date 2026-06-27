@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
@@ -12,7 +13,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // In production this would point to the deployed backend URL
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(API_URL + '');
     setSocket(newSocket);
 
     return () => newSocket.close();

@@ -1,3 +1,4 @@
+import { API_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../contexts/SocketContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -25,7 +26,7 @@ const ServantPortal = () => {
   const fetchActiveTables = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/floors', {
+      const response = await fetch(API_URL + '/api/floors', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -48,7 +49,7 @@ const ServantPortal = () => {
   const fetchPendingDeliveries = async () => {
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(API_URL + '/api/orders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -94,7 +95,7 @@ const ServantPortal = () => {
 
     try {
       const token = sessionStorage.getItem('userToken');
-      const response = await fetch(`http://localhost:5000/api/orders/${activeDelivery._id}/status`, {
+      const response = await fetch(`${API_URL}/api/orders/${activeDelivery._id}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ const ServantPortal = () => {
   const handleTableClick = async (table) => {
     setSelectedTable(table);
     try {
-      const res = await fetch(`http://localhost:5000/api/payments/bill/${table._id}`);
+      const res = await fetch(`${API_URL}/api/payments/bill/${table._id}`);
       if (res.ok) {
         const billData = await res.json();
         if (billData.total > 0) {
@@ -133,7 +134,7 @@ const ServantPortal = () => {
   const handleSettleBill = async (paymentDetails) => {
     if (!selectedTable) return;
     try {
-      const response = await fetch('http://localhost:5000/api/payments/settle', {
+      const response = await fetch(API_URL + '/api/payments/settle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
