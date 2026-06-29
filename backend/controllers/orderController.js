@@ -126,7 +126,7 @@ const getOrders = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
   const { status } = req.body; // Pending, Preparing, Ready, Served, Completed
   try {
-    const order = await Order.findById(req.params.id).populate('table');
+    const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     order.status = status;
@@ -139,17 +139,20 @@ const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
+    // Populate after save to avoid storing populated object in mock DB
+    const populatedOrder = await Order.findById(order._id).populate('table');
+
     const io = req.app.get('io');
-    if (io) {
+    if (io && populatedOrder) {
       if (status === 'Ready') {
-        io.emit('kitchen_ready', { orderId: order.orderNumber, tableNumber: order.table?.tableNumber, _id: order._id });
+        io.emit('kitchen_ready', { orderId: populatedOrder.orderNumber, tableNumber: populatedOrder.table?.tableNumber, _id: populatedOrder._id });
       }
       if (status === 'Served') {
-        io.emit('order_served', { orderId: order.orderNumber, _id: order._id, tableNumber: order.table?.tableNumber });
+        io.emit('order_served', { orderId: populatedOrder.orderNumber, _id: populatedOrder._id, tableNumber: populatedOrder.table?.tableNumber });
       }
       if (status === 'Completed') {
         if (order.table) {
-          const table = await Table.findById(order.table._id);
+          const table = await Table.findById(order.table);
           table.status = 'Vacant';
           await table.save();
           io.emit('table_state_changed', { tableId: table._id, status: 'Vacant' });
