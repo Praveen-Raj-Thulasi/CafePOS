@@ -107,6 +107,8 @@ const createOrder = async (req, res) => {
       io.emit('analytics_updated');
     }
 
+    res.status(201).json(order);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

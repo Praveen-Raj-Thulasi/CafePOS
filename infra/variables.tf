@@ -4,17 +4,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "existing_vpc_id" {
-  type        = string
-  description = "ID of the existing VPC to deploy into"
-  default     = "vpc-0cd6535b8d0099bcf"
-}
-
-variable "existing_ecr_name" {
-  type        = string
-  description = "Name of the existing ECR repository"
-  default     = "cafinity-backend"
-}
 
 variable "project_name" {
   type        = string

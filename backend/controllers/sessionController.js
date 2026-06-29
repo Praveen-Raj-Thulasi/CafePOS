@@ -1,5 +1,6 @@
 const POSSession = require('../models/POSSession');
 const Order = require('../models/Order');
+const User = require('../models/User');
 
 // Get active session
 const getActiveSession = async (req, res) => {

@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
+const Product = require('../models/Product');
 
 const getTickets = async (req, res) => {
   try {

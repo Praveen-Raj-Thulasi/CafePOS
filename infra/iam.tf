@@ -74,3 +74,30 @@ resource "aws_iam_role" "ecs_task_role" {
     Name = "${var.project_name}-ecs-task-role-${var.environment}"
   }
 }
+
+# Custom policy to allow ECS task to connect to RDS via IAM Auth
+resource "aws_iam_policy" "ecs_rds_auth_policy" {
+  name        = "${var.project_name}-ecs-rds-auth-${var.environment}"
+  description = "Allows ECS task to connect to Aurora via IAM DB Auth"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "rds-db:connect"
+        ]
+        Resource = [
+          "arn:aws:rds-db:us-east-1:085876626828:dbuser:*/postgres"
+        ]
+      }
+    ]
+  })
+}
+
+# Attach RDS auth policy to task role
+resource "aws_iam_role_policy_attachment" "ecs_rds_auth" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.ecs_rds_auth_policy.arn
+}

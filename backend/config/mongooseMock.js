@@ -45,8 +45,16 @@ Schema.Types = {
 
 class Document {
   constructor(data, modelClass) {
+    if (modelClass.schema && modelClass.schema.definition) {
+      for (const [key, field] of Object.entries(modelClass.schema.definition)) {
+        if (data[key] === undefined && field && field.default !== undefined) {
+          data[key] = typeof field.default === 'function' ? field.default() : field.default;
+        }
+      }
+    }
     Object.assign(this, data);
     Object.defineProperty(this, '_modelClass', { value: modelClass, enumerable: false });
+    Object.defineProperty(this, '_doc', { get: function() { return { ...this }; }, enumerable: false });
     
     // Bind schema methods
     if (modelClass.schema && modelClass.schema.methods) {
@@ -58,6 +66,11 @@ class Document {
 
   isModified(path) {
     return true;
+  }
+
+  toObject() {
+    const obj = { ...this };
+    return obj;
   }
 
   async save() {
@@ -84,6 +97,10 @@ class Document {
     }
 
     const plainData = { ...this };
+    const now = new Date();
+    if (!plainData.createdAt) plainData.createdAt = now;
+    plainData.updatedAt = now;
+    
     if (!plainData._id) {
       plainData._id = this._modelClass.generateId();
     } else if (plainData._id instanceof ObjectId) {
@@ -128,14 +145,21 @@ function matchMongoQuery(doc, query) {
           } else if (op === '$exists') {
             const exists = (docVal !== undefined && docVal !== null);
             if (exists !== !!opVal) return false;
-          } else if (op === '$gte') {
-            if (!(docVal >= opVal)) return false;
-          } else if (op === '$lte') {
-            if (!(docVal <= opVal)) return false;
-          } else if (op === '$gt') {
-            if (!(docVal > opVal)) return false;
-          } else if (op === '$lt') {
-            if (!(docVal < opVal)) return false;
+          } else if (['$gte', '$lte', '$gt', '$lt'].includes(op)) {
+            let dVal = docVal;
+            let oVal = opVal;
+            if (oVal instanceof Date && typeof dVal === 'string') dVal = new Date(dVal);
+            else if (dVal instanceof Date && typeof oVal === 'string') oVal = new Date(oVal);
+            
+            if (dVal instanceof Date && oVal instanceof Date) {
+              dVal = dVal.getTime();
+              oVal = oVal.getTime();
+            }
+
+            if (op === '$gte' && !(dVal >= oVal)) return false;
+            if (op === '$lte' && !(dVal <= oVal)) return false;
+            if (op === '$gt' && !(dVal > oVal)) return false;
+            if (op === '$lt' && !(dVal < oVal)) return false;
           } else if (op === '$ne') {
             if (docVal?.toString() === opVal?.toString()) return false;
           }
@@ -195,6 +219,7 @@ function updateDoc(doc, updateObj) {
       doc[key] = (doc[key] || 0) + val;
     }
   }
+  doc.updatedAt = new Date();
   return doc;
 }
 
@@ -231,6 +256,17 @@ class Query {
 
   populate(path, select) {
     this.populatePaths.push({ path, select });
+    return this;
+  }
+
+  select(fields) {
+    if (typeof fields === 'string') {
+      this.selectFields = fields.split(' ');
+    } else if (Array.isArray(fields)) {
+      this.selectFields = fields;
+    } else if (typeof fields === 'object' && fields !== null) {
+      this.selectFields = Object.keys(fields).map(k => fields[k] === 0 ? `-${k}` : k);
+    }
     return this;
   }
 
@@ -271,6 +307,10 @@ class Query {
 
     if (this.limitVal !== null) {
       docs = docs.slice(0, this.limitVal);
+    }
+
+    if (this.selectFields) {
+      docs = docs.map(d => filterFields(d, this.selectFields));
     }
 
     if (!this.isLean) {
@@ -407,12 +447,38 @@ const mongoose = {
       pgUri = pgUri.replace('localhost', 'postgres');
     }
 
+    const { Signer } = require('@aws-sdk/rds-signer');
+
     // Strip sslmode parameter from the connection string to allow rejectUnauthorized config to take effect
     pgUri = pgUri.replace(/(\?|&)sslmode=[^&]*/g, '');
 
+    const url = new URL(pgUri);
+    const host = url.hostname;
+    const port = url.port || 5432;
+    const user = url.username || 'postgres';
+    let password = url.password;
+
+    // Use IAM authentication if connecting to Amazon RDS/Aurora
+    if (host.includes('amazonaws.com') && !pgUri.includes('localhost')) {
+      const region = host.split('.')[2]; // Extract region from endpoint
+      const signer = new Signer({
+        hostname: host,
+        port: parseInt(port, 10),
+        username: user,
+        region: region
+      });
+      password = async () => {
+        return await signer.getAuthToken();
+      };
+    }
+
     pool = new Pool({
-      connectionString: pgUri,
-      ssl: process.env.NODE_ENV === 'production' || pgUri.includes('amazonaws.com') ? { rejectUnauthorized: false } : false
+      host: host,
+      port: port,
+      user: user,
+      password: password,
+      database: url.pathname.slice(1),
+      ssl: process.env.NODE_ENV === 'production' || host.includes('amazonaws.com') ? { rejectUnauthorized: false } : false
     });
 
     await pool.query(`
@@ -483,7 +549,7 @@ const mongoose = {
         return new Query(DynamicModel, query, false);
       }
 
-      static async findById(id) {
+      static findById(id) {
         if (!id) return null;
         return new Query(DynamicModel, { _id: id.toString() }, false);
       }

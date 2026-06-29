@@ -1,4 +1,5 @@
 const Promotion = require('../models/Promotion');
+const Product = require('../models/Product');
 
 const getAllPromotions = async (req, res) => {
   try {

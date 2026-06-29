@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 // @access  Private/Admin
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({ isArchived: false }).select('-passwordHash');
+    const users = await User.find({ isArchived: { $ne: true } }).select('-passwordHash');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });

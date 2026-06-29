@@ -1,12 +1,12 @@
-# Reference the existing VPC
+# Fetch the default VPC
 data "aws_vpc" "main" {
-  id = var.existing_vpc_id
+  default = true
 }
 
-# Fetch subnets belonging to the existing VPC
+# Fetch subnets belonging to the default VPC
 data "aws_subnets" "all" {
   filter {
     name   = "vpc-id"
-    values = [var.existing_vpc_id]
+    values = [data.aws_vpc.main.id]
   }
 }

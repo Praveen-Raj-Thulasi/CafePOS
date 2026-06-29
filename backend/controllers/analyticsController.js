@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Table = require('../models/Table');
+const Product = require('../models/Product');
 
 const getAnalytics = async (req, res) => {
   try {

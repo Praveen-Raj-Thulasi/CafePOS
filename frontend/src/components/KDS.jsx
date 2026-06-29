@@ -20,7 +20,9 @@ const KDS = () => {
   }, []);
 
   const handleLogout = () => {
+    sessionStorage.removeItem('userToken');
     sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userName');
     navigate('/login');
   };
 

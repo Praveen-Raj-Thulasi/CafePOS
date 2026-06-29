@@ -286,7 +286,7 @@ const CustomerMenu = () => {
                 <div key={product._id} style={{ display: 'flex', backgroundColor: 'var(--card-bg)', padding: '1rem', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>{product.name}</h3>
-                    <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1.2rem' }}>₹{product.price.toFixed(2)}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1.2rem' }}>₹{Number(product.price || 0).toFixed(2)}</span>
                   </div>
 
                   {cart.find(i => i._id === product._id) ? (
@@ -322,7 +322,7 @@ const CustomerMenu = () => {
                   <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--card-bg)', padding: '1rem', borderRadius: '15px' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600 }}>{item.name}</div>
-                      <div style={{ color: 'var(--text-secondary)' }}>₹{(item.price * item.qty).toFixed(2)}</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>₹{(Number(item.price || 0) * item.qty).toFixed(2)}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'var(--hover-bg)', padding: '0.25rem', borderRadius: '99px' }}>
                       <button onClick={() => updateQty(item._id, -1)} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', backgroundColor: 'var(--card-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={16} /></button>
@@ -600,7 +600,7 @@ const CustomerMenu = () => {
                           {alt.similarityScore}% Match
                         </span>
                       </div>
-                      <div style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>₹{alt.price.toFixed(2)}</div>
+                      <div style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>₹{Number(alt.price || 0).toFixed(2)}</div>
                     </div>
                     <div style={{ backgroundColor: '#dcfce7', color: '#166534', padding: '0.4rem 0.8rem', borderRadius: '99px', fontSize: '0.85rem', fontWeight: 700 }}>
                       ⏱️ {alt.estimatedWaitTime} mins

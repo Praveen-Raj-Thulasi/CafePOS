@@ -13,7 +13,7 @@ resource "aws_secretsmanager_secret" "db_secrets" {
 resource "aws_secretsmanager_secret_version" "db_secrets_val" {
   secret_id = aws_secretsmanager_secret.db_secrets.id
   secret_string = jsonencode({
-    MONGO_URI  = "postgresql://${aws_rds_cluster.db.master_username}:${random_password.db_password.result}@${aws_rds_cluster.db.endpoint}:5432/odoocafe?sslmode=require"
+    MONGO_URI  = "postgresql://${data.aws_rds_cluster.db.master_username}:supersecretpassword123@${data.aws_rds_cluster.db.endpoint}:5432/odoocafe?sslmode=require"
     JWT_SECRET = var.jwt_secret
     EMAIL_USER = var.email_user
     EMAIL_PASS = var.email_pass

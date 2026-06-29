@@ -262,7 +262,7 @@ const OrderView = () => {
               style={{ padding: '1.5rem', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
             >
               <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{product.name}</h4>
-              <span style={{ color: 'var(--accent-primary)', fontWeight: 600, fontSize: '1.2rem' }}>₹{product.price.toFixed(2)}</span>
+              <span style={{ color: 'var(--accent-primary)', fontWeight: 600, fontSize: '1.2rem' }}>₹{Number(product.price || 0).toFixed(2)}</span>
             </div>
           ))}
         </div>
@@ -371,7 +371,7 @@ const OrderView = () => {
                 <div key={item._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 500 }}>{item.name}</div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>₹{item.price.toFixed(2)}</div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>₹{Number(item.price || 0).toFixed(2)}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <button onClick={() => updateQty(item._id, -1)} style={{ padding: '0.25rem', borderRadius: '5px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}><Minus size={14} /></button>

@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Table = require('../models/Table');
 const OrderItem = require('../models/OrderItem');
+const Product = require('../models/Product');
 
 const Promotion = require('../models/Promotion');
 const nodemailer = require('nodemailer');
@@ -14,7 +15,7 @@ const getTableBill = async (req, res) => {
     const qrSessionId = req.query.qrSessionId;
     
     // Find all unpaid orders for this table
-    let query = { table: tableId, paymentStatus: 'Unpaid' };
+    let query = { table: tableId, paymentStatus: { $in: ['Unpaid', 'PendingVerification'] } };
     if (qrSessionId) query.qrSessionId = qrSessionId;
     
     const orders = await Order.find(query);

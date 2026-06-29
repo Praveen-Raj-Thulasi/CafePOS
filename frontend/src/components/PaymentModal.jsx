@@ -205,7 +205,7 @@ const PaymentModal = ({ isOpen, onClose, total, prePromoTotal = 0, automatedDisc
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--card-bg)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Tendered</span>
-                <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>₹{tendered ? numTendered.toFixed(2) : '0.00'}</span>
+                <span style={{ fontWeight: 700, fontSize: '1.2rem' }}>₹{tendered ? tendered : '0.00'}</span>
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', padding: '1rem', backgroundColor: change > 0 ? 'var(--highlight-green)' : 'var(--card-bg)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>

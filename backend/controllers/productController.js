@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Category = require('../models/Category');
 
 // @desc    Get all products
 // @route   GET /api/products

@@ -6,7 +6,7 @@ output "vpc_id" {
 
 # Container and Compute Outputs
 output "ecr_repository_url" {
-  value       = data.aws_ecr_repository.backend.repository_url
+  value       = aws_ecr_repository.backend.repository_url
   description = "URL of the ECR repository to push backend Docker images to"
 }
 

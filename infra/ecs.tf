@@ -1,6 +1,11 @@
-# Reference existing ECR repository
-data "aws_ecr_repository" "backend" {
-  name = var.existing_ecr_name
+# Create ECR repository
+resource "aws_ecr_repository" "backend" {
+  name                 = "${var.project_name}-backend-${var.environment}"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
 # ECS Cluster
@@ -88,7 +93,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name      = "backend"
-      image     = "${data.aws_ecr_repository.backend.repository_url}:latest"
+      image     = "${aws_ecr_repository.backend.repository_url}:latest"
       essential = true
       portMappings = [
         {

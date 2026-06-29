@@ -319,7 +319,7 @@ const MenuManager = () => {
                     {product.description && <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{product.description}</p>}
                     
                     <div style={{ color: 'var(--accent-primary)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>
-                      ₹{product.price.toFixed(2)} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ {product.unit || 'per piece'}</span>
+                      ₹{Number(product.price || 0).toFixed(2)} <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ {product.unit || 'per piece'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
                       <span>Tax: {product.tax || 0}%</span>

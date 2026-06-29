@@ -11,7 +11,7 @@ const FloorPlan = () => {
   const [floors, setFloors] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
   const [newFloorName, setNewFloorName] = useState('');
-  const [newTable, setNewTable] = useState({ tableNumber: '', seats: 4 });
+  const [newTables, setNewTables] = useState({});
 
   const fetchFloors = async () => {
     try {
@@ -121,16 +121,17 @@ const FloorPlan = () => {
 
   const handleCreateTable = async (floorId, e) => {
     e.preventDefault();
-    if (!newTable.tableNumber.trim()) return;
+    const tableData = newTables[floorId] || { tableNumber: '', seats: 4 };
+    if (!tableData.tableNumber.trim()) return;
     try {
       const token = sessionStorage.getItem('userToken');
       const res = await fetch(API_URL + '/api/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newTable, floor: floorId })
+        body: JSON.stringify({ ...tableData, floor: floorId })
       });
       if (res.ok) {
-        setNewTable({ tableNumber: '', seats: 4 });
+        setNewTables(prev => ({ ...prev, [floorId]: { tableNumber: '', seats: 4 } }));
         fetchFloors();
       }
     } catch (err) {
@@ -198,8 +199,8 @@ const FloorPlan = () => {
             {/* Create Table Form */}
             {currentRole === 'Admin' && (
               <form onSubmit={(e) => handleCreateTable(floor._id, e)} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <input type="text" placeholder="Table #" value={newTable.tableNumber} onChange={e => setNewTable({ ...newTable, tableNumber: e.target.value })} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '120px' }} required />
-                <input type="number" placeholder="Seats" value={newTable.seats} onChange={e => setNewTable({ ...newTable, seats: parseInt(e.target.value) })} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100px' }} required min="1" />
+                <input type="text" placeholder="Table #" value={newTables[floor._id]?.tableNumber || ''} onChange={e => setNewTables(prev => ({ ...prev, [floor._id]: { ...(prev[floor._id] || {seats: 4}), tableNumber: e.target.value } }))} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '120px' }} required />
+                <input type="number" placeholder="Seats" value={newTables[floor._id]?.seats || 4} onChange={e => setNewTables(prev => ({ ...prev, [floor._id]: { ...(prev[floor._id] || {tableNumber: ''}), seats: parseInt(e.target.value) } }))} style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100px' }} required min="1" />
                 <button type="submit" className="pill-btn" style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--text-primary)' }}>
                   <Plus size={18} /> Add Table
                 </button>
